@@ -1,0 +1,39 @@
+{
+  "name": "aussie-os",
+  "private": true,
+  "version": "2.2.1",
+  "type": "module",
+  "description": "Production-grade AI-powered browser-based operating system with agent capabilities",
+  "author": "Aussie OS Team",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "tsc && vite build",
+    "build:analyze": "vite build --mode analyze",
+    "preview": "vite preview --host",
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist node_modules/.vite",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@google/genai": "^1.30.0",
+    "@monaco-editor/react": "^4.6.0",
+    "isomorphic-git": "1.25.6",
+    "lucide-react": "^0.554.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-markdown": "^10.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "autoprefixer": "^10.4.22",
+    "postcss": "^8.5.6",
+    "rollup-plugin-visualizer": "^5.12.0",
+    "tailwindcss": "^4.1.17",
+    "terser": "^5.36.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0",
+    "vite-plugin-compression": "^0.5.1"
+  }
+}

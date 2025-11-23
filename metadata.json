@@ -1,0 +1,7 @@
+{
+  "name": "Aussie OS",
+  "description": "A production-grade in-browser Operating System with persistent virtual file system, real shell interpreter, live JS runtime, autonomous Gemini 3.0 agent integration, Visual Flow Automation, Automated Browsing, and Automated Task Scheduler.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
