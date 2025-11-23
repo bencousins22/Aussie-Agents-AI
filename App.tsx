@@ -100,8 +100,8 @@ const SIDEBAR_KEY = 'aussie_sidebar_open';
 const VIEW_KEY = 'aussie_last_view';
 
 const clampChatWidth = (value: number, viewport: number) => {
-    const min = 280;
-    const max = Math.min(Math.max(Math.floor(viewport * 0.45), 360), 640);
+    const min = 260;
+    const max = Math.min(Math.max(Math.floor(viewport * 0.32), 320), 440);
     return Math.min(Math.max(value, min), max);
 };
 
@@ -282,7 +282,7 @@ const App: React.FC = () => {
             <div className={`flex flex-1 min-w-0 relative overflow-hidden ${isMobile ? 'pb-[70px]' : ''}`}>
                 {/* Main Content Area - Center */}
                 <div className={`flex-1 flex flex-col min-h-0 min-w-0 relative ${isMobileBrowserSplit ? 'h-[55%]' : 'h-full'}`}>
-                    <div className="w-full h-full max-w-screen-2xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 overflow-auto">
+                    <div className="w-full h-full max-w-6xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 overflow-auto">
                         <Suspense fallback={<ComponentLoader />}>
                             <Workspace
                                 activeView={activeView}
@@ -326,7 +326,7 @@ const App: React.FC = () => {
                             ? isMobileBrowserSplit
                                 ? 'absolute bottom-0 left-0 right-0 h-[45%] z-50 border-t border-os-border shadow-2xl bg-[#14161b] flex flex-col min-w-0'
                                 : `absolute inset-0 z-50 bg-os-bg/95 backdrop-blur-xl transition-transform duration-300 ease-out flex flex-col min-w-0 ${chatOpen ? 'translate-y-0' : 'translate-y-[110%]'}`
-                            : `relative flex flex-col bg-os-bg min-w-[320px] max-w-[520px] flex-shrink-0 ${chatOpen ? 'border-l border-os-border' : 'hidden'}`}
+                            : `relative flex flex-col bg-os-bg min-w-[260px] max-w-[440px] flex-shrink-0 ${chatOpen ? 'border-l border-os-border' : 'hidden'}`}
                     `}
                     style={!isMobile && chatOpen ? { width: `${chatWidth}px` } : undefined}
                 >
