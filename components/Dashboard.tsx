@@ -406,33 +406,33 @@ export const Dashboard: React.FC<Props> = memo(({ onNavigate, activeView }) => {
             <div className="absolute inset-x-0 top-6 md:top-8 lg:top-10 pb-24 z-20 pointer-events-none">
                 <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 xl:px-12 space-y-6 pointer-events-auto">
                     {/* Hero */}
-                    <div className="w-full rounded-3xl xl:rounded-[2rem] border border-white/10 bg-[#0e111a]/90 backdrop-blur-2xl p-8 md:p-10 lg:p-12 shadow-2xl shadow-black/50 flex flex-col md:flex-row md:items-center md:justify-between gap-8">
-                        <div className="space-y-3">
-                            <div className="text-xs md:text-sm font-bold uppercase tracking-[0.25em] text-aussie-500">Aussie OS Command Center</div>
-                            <div className="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-tight">All components, one launchpad.</div>
-                            <div className="text-base md:text-lg text-gray-400 max-w-2xl leading-relaxed">Jump into any workspace: code, browser, flow, scheduler, deploy, marketplace, GitHub, and chat/agent.</div>
+                    <div className="w-full rounded-2xl md:rounded-3xl xl:rounded-[2rem] border border-white/10 bg-[#0e111a]/90 backdrop-blur-2xl p-5 sm:p-6 md:p-8 lg:p-10 xl:p-12 shadow-2xl shadow-black/50 flex flex-col md:flex-row md:items-center md:justify-between gap-6 md:gap-8">
+                        <div className="space-y-2 sm:space-y-3">
+                            <div className="text-[10px] sm:text-xs md:text-sm font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em] text-aussie-500">Aussie OS Command Center</div>
+                            <div className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-tight">All components, one launchpad.</div>
+                            <div className="text-sm sm:text-base md:text-lg text-gray-400 max-w-2xl leading-relaxed">Jump into any workspace: code, browser, flow, scheduler, deploy, marketplace, GitHub, and chat/agent.</div>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full md:w-auto md:min-w-[400px]">
-                            <button onClick={() => onNavigate('code')} className="px-6 py-3.5 rounded-xl bg-gradient-to-br from-aussie-500 to-aussie-600 text-black font-bold text-base shadow-xl shadow-aussie-500/30 hover:shadow-2xl hover:shadow-aussie-500/40 active:scale-95 transition-all">Open Code</button>
-                            <button onClick={() => onNavigate('browser')} className="px-6 py-3.5 rounded-xl bg-white/10 border border-white/10 text-white text-base font-semibold hover:border-aussie-500/40 hover:bg-aussie-500/10 transition-all">Open Browser</button>
-                            <button onClick={() => onNavigate('marketplace')} className="px-6 py-3.5 rounded-xl bg-white/10 border border-white/10 text-white text-base font-semibold hover:border-aussie-500/40 hover:bg-aussie-500/10 transition-all">App Store</button>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3 w-full md:w-auto md:min-w-[380px] lg:min-w-[400px]">
+                            <button onClick={() => onNavigate('code')} className="px-5 sm:px-6 py-3 sm:py-3.5 rounded-lg sm:rounded-xl bg-gradient-to-br from-aussie-500 to-aussie-600 text-black font-bold text-sm sm:text-base shadow-xl shadow-aussie-500/30 hover:shadow-2xl hover:shadow-aussie-500/40 active:scale-95 transition-all">Open Code</button>
+                            <button onClick={() => onNavigate('browser')} className="px-5 sm:px-6 py-3 sm:py-3.5 rounded-lg sm:rounded-xl bg-white/10 border border-white/10 text-white text-sm sm:text-base font-semibold hover:border-aussie-500/40 hover:bg-aussie-500/10 transition-all">Open Browser</button>
+                            <button onClick={() => onNavigate('marketplace')} className="px-5 sm:px-6 py-3 sm:py-3.5 rounded-lg sm:rounded-xl bg-white/10 border border-white/10 text-white text-sm sm:text-base font-semibold hover:border-aussie-500/40 hover:bg-aussie-500/10 transition-all">App Store</button>
                         </div>
                     </div>
 
                     {/* App Grid */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5 md:gap-6">
+                    <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
                         {[...NAV_ITEMS].map(item => (
                             <button
                                 key={item.view}
                                 onClick={() => onNavigate(item.view as MainView)}
-                                className={`group w-full text-left rounded-2xl border bg-[#1a1f2e]/95 backdrop-blur-2xl p-6 md:p-7 flex flex-col items-start gap-4 hover:border-aussie-500/50 hover:bg-[#1e2433] transition-all shadow-xl shadow-black/40 hover:shadow-2xl hover:shadow-aussie-500/10 hover:-translate-y-2 active:scale-[0.98] ${activeView === item.view ? 'ring-2 ring-aussie-500/60 border-aussie-500/40 bg-[#1e2433]' : 'border-white/15'}`}
+                                className={`group w-full text-left rounded-xl sm:rounded-2xl border bg-[#1a1f2e]/95 backdrop-blur-2xl p-4 sm:p-5 md:p-6 lg:p-7 flex flex-col items-start gap-3 sm:gap-4 hover:border-aussie-500/50 hover:bg-[#1e2433] transition-all shadow-lg sm:shadow-xl shadow-black/40 hover:shadow-2xl hover:shadow-aussie-500/10 hover:-translate-y-1 sm:hover:-translate-y-2 active:scale-[0.98] ${activeView === item.view ? 'ring-2 ring-aussie-500/60 border-aussie-500/40 bg-[#1e2433]' : 'border-white/15'}`}
                             >
-                                <div className="w-16 h-16 md:w-18 md:h-18 rounded-2xl bg-gradient-to-br from-aussie-500/20 to-aussie-600/10 border border-aussie-500/30 flex items-center justify-center text-aussie-400 group-hover:border-aussie-500/50 group-hover:from-aussie-500/30 group-hover:to-aussie-600/20 group-hover:shadow-lg group-hover:shadow-aussie-500/20 transition-all">
-                                    <item.icon className="w-8 h-8 md:w-9 md:h-9 stroke-[2]" />
+                                <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-18 lg:h-18 rounded-xl sm:rounded-2xl bg-gradient-to-br from-aussie-500/20 to-aussie-600/10 border border-aussie-500/30 flex items-center justify-center text-aussie-400 group-hover:border-aussie-500/50 group-hover:from-aussie-500/30 group-hover:to-aussie-600/20 group-hover:shadow-lg group-hover:shadow-aussie-500/20 transition-all">
+                                    <item.icon className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 lg:w-9 lg:h-9 stroke-[2]" />
                                 </div>
                                 <div className="flex-1 min-w-0 w-full">
-                                    <div className="text-base md:text-lg font-bold text-white truncate mb-1.5">{item.tooltip}</div>
-                                    <div className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Launch App</div>
+                                    <div className="text-sm sm:text-base md:text-lg font-bold text-white truncate mb-1">{item.tooltip}</div>
+                                    <div className="text-[10px] sm:text-xs text-gray-400 font-semibold uppercase tracking-wider">Launch App</div>
                                 </div>
                             </button>
                         ))}

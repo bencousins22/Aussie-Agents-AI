@@ -332,8 +332,8 @@ const App: React.FC = () => {
                     className={`
                         ${isMobile
                             ? isMobileBrowserSplit
-                                ? 'absolute bottom-0 left-0 right-0 h-[45%] z-50 border-t border-os-border shadow-2xl bg-[#14161b] flex flex-col min-w-0'
-                                : `absolute inset-0 z-50 bg-os-bg/95 backdrop-blur-xl transition-transform duration-300 ease-out flex flex-col min-w-0 ${chatOpen ? 'translate-y-0' : 'translate-y-[110%]'}`
+                                ? 'absolute bottom-[70px] left-0 right-0 h-[calc(55%-70px)] z-50 border-t border-white/10 shadow-2xl bg-[#0d1117] flex flex-col min-w-0'
+                                : `fixed inset-x-0 top-0 bottom-[70px] z-50 bg-[#0d1117]/98 backdrop-blur-xl transition-transform duration-300 ease-out flex flex-col min-w-0 ${chatOpen ? 'translate-y-0' : 'translate-y-full'}`
                             : `relative order-last flex flex-row bg-[#0d1117] min-w-[320px] max-w-[480px] flex-shrink-0 ${chatOpen ? 'border-l border-white/10' : 'hidden'}`}
                     `}
                     style={!isMobile && chatOpen ? { width: `${chatWidth}px` } : undefined}
