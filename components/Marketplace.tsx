@@ -83,7 +83,7 @@ export const Marketplace: React.FC = () => {
             </div>
 
             {/* Categories & Content */}
-            <div className="flex-1 flex flex-col md:flex-row min-h-0 max-w-6xl mx-auto w-full">
+            <div className="flex-1 flex flex-col md:flex-row min-h-0 max-w-5xl mx-auto w-full px-3 sm:px-4 md:px-6">
                 {/* Sidebar Filters (Desktop) */}
                 <div className="hidden md:flex w-56 flex-col border-r border-os-border bg-[#0f1115] p-4 gap-2 shrink-0">
                     <div className="text-xs font-bold text-gray-500 uppercase mb-2 px-2">Discover</div>
@@ -122,7 +122,7 @@ export const Marketplace: React.FC = () => {
                     
                     {/* Hero / Featured */}
                     {category === 'all' && !search && featuredApp && (
-                        <div className="mb-8 rounded-2xl bg-gradient-to-r from-[#0f332e] to-[#0a1e3f] border border-aussie-500/20 p-6 md:p-8 text-white flex items-center justify-between relative overflow-hidden shadow-2xl shrink-0 group animate-in slide-in-from-top duration-500 max-w-6xl mx-auto">
+                        <div className="mb-8 rounded-2xl bg-gradient-to-r from-[#0f332e] to-[#0a1e3f] border border-aussie-500/20 p-6 md:p-8 text-white flex items-center justify-between relative overflow-hidden shadow-2xl shrink-0 group animate-in slide-in-from-top duration-500 max-w-5xl mx-auto">
                             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
                             <div className="relative z-10 max-w-lg">
                                 <div className="inline-block px-3 py-1 bg-aussie-500/10 rounded-full text-aussie-500 text-[10px] font-bold uppercase mb-4 border border-aussie-500/20 shadow-sm">
@@ -155,7 +155,7 @@ export const Marketplace: React.FC = () => {
                         {search ? `Search Results for "${search}"` : (category === 'all' ? 'Trending Apps' : `${category.charAt(0).toUpperCase() + category.slice(1)} Apps`)}
                     </h3>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6 max-w-6xl mx-auto">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6 max-w-5xl mx-auto">
                         {filteredApps.map(app => {
                              const Icon = app.icon || Zap;
                              const isInstalled = app.installed;
