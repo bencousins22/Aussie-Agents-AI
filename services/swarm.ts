@@ -1,6 +1,6 @@
 
 import { bus } from './eventBus';
-import { julesVM } from './julesVM';
+import * as julesAPI from './julesAPI';
 
 interface SwarmConfig {
     topology: 'hierarchical' | 'flat' | 'mesh';
@@ -10,7 +10,7 @@ interface SwarmConfig {
 
 /**
  * Agent Swarm Orchestrator
- * Manages multiple JulesVM instances to perform complex tasks with consensus.
+ * Manages multiple Jules API sessions to perform complex tasks with consensus.
  */
 class SwarmOrchestrator {
     
@@ -63,79 +63,45 @@ class SwarmOrchestrator {
     }
 
     /**
-     * Run individual agent task - no artificial delays
-     * Each agent independently executes the task in JulesVM
+     * Run individual agent task using the Jules API.
      */
-    private async runAgent(agent: any, task: string) {
-        // Parse task to generate executable code
-        const code = this.generateCodeFromTask(task);
+    private async runAgent(agent: any, task: string): Promise<{ status: string, output: any }> {
+        try {
+            // 1. Get the first available source.
+            const sources = await julesAPI.listSources();
+            if (!sources.sources || sources.sources.length === 0) {
+                throw new Error('No sources found.');
+            }
+            const source = sources.sources[0].name;
 
-        // Execute in JulesVM (actual execution, no simulation)
-        return await julesVM.execute(code, 'remote');
-    }
+            // 2. Create a new session.
+            const session = await julesAPI.createSession(task, source);
+            bus.emit('agent-message', { agent: `Agent ${agent.id}`, text: `Session created: ${session.id}` });
 
-    /**
-     * Generate executable code from natural language task description
-     * Uses heuristics to convert task into runnable code
-     */
-    private generateCodeFromTask(task: string): string {
-        // Convert common task patterns to executable code
-        const taskLower = task.toLowerCase();
-
-        // Mathematical operations
-        if (taskLower.includes('calculate') || taskLower.includes('compute')) {
-            const numberMatch = task.match(/(\d+\.?\d*)/g);
-            if (numberMatch && numberMatch.length >= 2) {
-                if (taskLower.includes('sum') || taskLower.includes('add')) {
-                    return `const result = ${numberMatch.join(' + ')}; result;`;
-                } else if (taskLower.includes('multiply')) {
-                    return `const result = ${numberMatch.join(' * ')}; result;`;
-                } else if (taskLower.includes('average')) {
-                    const nums = numberMatch.join(', ');
-                    return `const nums = [${nums}]; nums.reduce((a,b) => a+b) / nums.length;`;
+            // 3. Poll for completion.
+            let isComplete = false;
+            let finalSession;
+            while (!isComplete) {
+                await new Promise(resolve => setTimeout(resolve, 5000)); // 5 second delay
+                const activities = await julesAPI.listActivities(session.id);
+                if (activities.activities) {
+                    for (const activity of activities.activities) {
+                        if (activity.sessionCompleted) {
+                            isComplete = true;
+                            finalSession = await julesAPI.getSession(session.id);
+                            break;
+                        }
+                    }
                 }
             }
-        }
+            
+            bus.emit('agent-message', { agent: `Agent ${agent.id}`, text: `Session complete: ${session.id}` });
+            return { status: 'success', output: finalSession };
 
-        // Data processing
-        if (taskLower.includes('sort') || taskLower.includes('filter') || taskLower.includes('find')) {
-            return `
-                const data = [1, 2, 3, 4, 5];
-                const result = data.sort((a, b) => a - b);
-                result;
-            `;
+        } catch (error: any) {
+            bus.emit('agent-message', { agent: `Agent ${agent.id}`, text: `Error: ${error.message}` });
+            return { status: 'failure', output: error };
         }
-
-        // String operations
-        if (taskLower.includes('reverse') || taskLower.includes('uppercase')) {
-            const text = task.match(/"([^"]+)"/)?.[1] || task;
-            if (taskLower.includes('reverse')) {
-                return `"${text}".split('').reverse().join('');`;
-            } else if (taskLower.includes('uppercase')) {
-                return `"${text}".toUpperCase();`;
-            }
-        }
-
-        // API/Data fetching
-        if (taskLower.includes('fetch') || taskLower.includes('get data')) {
-            return `
-                // Simulated data fetch (replace with real API in production)
-                const mockData = { status: 'success', data: { task: '${task}' } };
-                JSON.stringify(mockData);
-            `;
-        }
-
-        // Default: return task analysis
-        return `
-            // Task: ${task}
-            const analysis = {
-                task: '${task}',
-                timestamp: Date.now(),
-                agent: 'swarm',
-                status: 'analyzed'
-            };
-            JSON.stringify(analysis);
-        `;
     }
 }
 
