@@ -299,7 +299,7 @@ export const Dashboard: React.FC<Props> = memo(({ onNavigate, activeView }) => {
             onTouchEnd={handleEnd}
         >
             {/* Command Center Overlay */}
-            <div className="absolute inset-x-6 top-6 pb-20 z-20 pointer-events-none">
+            <div className="absolute inset-x-4 sm:inset-x-6 top-4 sm:top-6 pb-20 z-20 pointer-events-none">
                 <div className="max-w-6xl mx-auto space-y-4 pointer-events-auto">
                     {/* Hero */}
                     <div className="w-full rounded-3xl border border-white/10 bg-gradient-to-r from-[#0b1f1a] via-[#0f1423] to-[#0c0f18] p-6 md:p-8 shadow-2xl shadow-black/40 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
@@ -313,13 +313,13 @@ export const Dashboard: React.FC<Props> = memo(({ onNavigate, activeView }) => {
                                 <button onClick={() => onNavigate('marketplace')} className="px-4 py-2 rounded-lg bg-white/10 border border-white/10 text-white text-sm hover:border-aussie-500/40 hover:bg-aussie-500/5">App Store</button>
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-3 w-full md:w-[320px] text-xs">
-                            <QuickStat label="Open Windows" value={openWindows.length.toString()} />
-                            <QuickStat label="Widgets" value={widgets.length.toString()} />
-                            <QuickStat label="Desktop Items" value={icons.length.toString()} />
-                            <QuickStat label="Active View" value={activeView.toUpperCase()} />
-                        </div>
+                    <div className="grid grid-cols-2 gap-3 w-full md:w-[320px] text-xs">
+                        <QuickStat label="Open Windows" value={openWindows.length.toString()} />
+                        <QuickStat label="Widgets" value={widgets.length.toString()} />
+                        <QuickStat label="Desktop Items" value={icons.length.toString()} />
+                        <QuickStat label="Active View" value={activeView.toUpperCase()} />
                     </div>
+                </div>
 
                     {/* App Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
