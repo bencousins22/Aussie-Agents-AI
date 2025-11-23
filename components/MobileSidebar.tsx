@@ -8,7 +8,7 @@ interface Props {
     onClose: () => void;
     activeView: MainView;
     onNavigate: (view: MainView) => void;
-    menuItems: { view: MainView; icon: any; tooltip: string }[];
+    menuItems: ReadonlyArray<{ view: MainView; icon: any; tooltip: string }>;
 }
 
 export const MobileSidebar: React.FC<Props> = ({ isOpen, onClose, activeView, onNavigate, menuItems }) => {
