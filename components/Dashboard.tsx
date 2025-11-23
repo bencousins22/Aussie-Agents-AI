@@ -14,6 +14,8 @@ import { NAV_ITEMS } from './ActivityBar';
 import { SystemInfo } from './SystemInfo';
 import { WebOsDock } from './WebOsDock';
 
+const DOCK_STATE_KEY = 'aussie_os_dock_state_v1';
+
 interface Props {
     onNavigate: (view: MainView) => void;
     activeView: MainView;
@@ -59,6 +61,16 @@ export const Dashboard: React.FC<Props> = memo(({ onNavigate, activeView }) => {
     const [containerSize, setContainerSize] = useState({ width: window.innerWidth, height: window.innerHeight });
     const [openWindows, setOpenWindows] = useState<OSWindow[]>([]);
     const [layoutLocked, setLayoutLocked] = useState(false);
+    const [widgetDrag, setWidgetDrag] = useState<{ id: string; offsetX: number; offsetY: number } | null>(null);
+    const [dockState, setDockState] = useState<{ x: number; y: number; width: number; visible: boolean }>(() => {
+        try {
+            const raw = localStorage.getItem(DOCK_STATE_KEY);
+            if (raw) return JSON.parse(raw);
+        } catch {}
+        return { x: 24, y: 24, width: 280, visible: true };
+    });
+    const dockDragRef = useRef<{ startX: number; startY: number; x: number; y: number } | null>(null);
+    const dockResizeRef = useRef<{ startX: number; width: number } | null>(null);
     
     const [dragTarget, setDragTarget] = useState<string | null>(null);
     const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -107,6 +119,10 @@ export const Dashboard: React.FC<Props> = memo(({ onNavigate, activeView }) => {
             offBus();
         };
     }, []);
+
+    useEffect(() => {
+        try { localStorage.setItem(DOCK_STATE_KEY, JSON.stringify(dockState)); } catch {}
+    }, [dockState]);
 
     useEffect(() => {
         if (Object.keys(iconPositions).length > 0) {
@@ -195,6 +211,14 @@ export const Dashboard: React.FC<Props> = memo(({ onNavigate, activeView }) => {
                 [dragTarget]: { x: newX, y: newY }
             }));
         }
+
+        if (widgetDrag) {
+            const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+            const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+            const newX = Math.max(8, Math.min(containerSize.width - 180, clientX - widgetDrag.offsetX));
+            const newY = Math.max(8, Math.min(containerSize.height - 140, clientY - widgetDrag.offsetY));
+            setWidgets(prev => prev.map(w => w.id === widgetDrag.id ? { ...w, x: newX, y: newY } : w));
+        }
     };
 
     const handleEnd = () => {
@@ -219,6 +243,17 @@ export const Dashboard: React.FC<Props> = memo(({ onNavigate, activeView }) => {
                 }));
             }
             setDragTarget(null);
+        }
+
+        if (widgetDrag) {
+            const current = widgets.find(w => w.id === widgetDrag.id);
+            if (current) {
+                const snap = 10;
+                const boundedX = Math.max(8, Math.min(containerSize.width - 150, Math.round(current.x / snap) * snap));
+                const boundedY = Math.max(8, Math.min(containerSize.height - 120, Math.round(current.y / snap) * snap));
+                dashboardState.updateWidget(widgetDrag.id, { x: boundedX, y: boundedY });
+            }
+            setWidgetDrag(null);
         }
     };
 
@@ -274,6 +309,58 @@ export const Dashboard: React.FC<Props> = memo(({ onNavigate, activeView }) => {
     };
 
     const removeWidget = (id: string) => dashboardState.removeWidget(id);
+
+    const handleWidgetMouseDown = (e: React.MouseEvent | React.TouchEvent, widget: Widget) => {
+        if (layoutLocked) return;
+        e.stopPropagation();
+        const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+        const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+        setWidgetDrag({ id: widget.id, offsetX: clientX - widget.x, offsetY: clientY - widget.y });
+    };
+
+    const startDockDrag = (e: React.MouseEvent) => {
+        dockDragRef.current = { startX: e.clientX, startY: e.clientY, x: dockState.x, y: dockState.y };
+        window.addEventListener('mousemove', onDockDrag);
+        window.addEventListener('mouseup', endDockDrag);
+    };
+
+    const onDockDrag = (e: MouseEvent) => {
+        if (!dockDragRef.current) return;
+        const dx = e.clientX - dockDragRef.current.startX;
+        const dy = e.clientY - dockDragRef.current.startY;
+        setDockState(prev => ({
+            ...prev,
+            x: Math.max(8, Math.min(containerSize.width - prev.width - 8, dockDragRef.current!.x + dx)),
+            y: Math.max(8, Math.min(containerSize.height - 80, dockDragRef.current!.y + dy))
+        }));
+    };
+
+    const endDockDrag = () => {
+        window.removeEventListener('mousemove', onDockDrag);
+        window.removeEventListener('mouseup', endDockDrag);
+        dockDragRef.current = null;
+    };
+
+    const startDockResize = (e: React.MouseEvent) => {
+        dockResizeRef.current = { startX: e.clientX, width: dockState.width };
+        window.addEventListener('mousemove', onDockResize);
+        window.addEventListener('mouseup', endDockResize);
+    };
+
+    const onDockResize = (e: MouseEvent) => {
+        if (!dockResizeRef.current) return;
+        const dx = e.clientX - dockResizeRef.current.startX;
+        setDockState(prev => ({
+            ...prev,
+            width: Math.max(200, Math.min(500, dockResizeRef.current!.width + dx))
+        }));
+    };
+
+    const endDockResize = () => {
+        window.removeEventListener('mousemove', onDockResize);
+        window.removeEventListener('mouseup', endDockResize);
+        dockResizeRef.current = null;
+    };
 
     const createTextFile = () => {
         const name = `New File ${Date.now()}.txt`;
@@ -378,10 +465,31 @@ export const Dashboard: React.FC<Props> = memo(({ onNavigate, activeView }) => {
                 <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
             </div>
 
-            {/* Web OS Dock */}
-            <div className="absolute top-4 left-4 xl:left-72 z-30 hidden md:block">
-                <WebOsDock onNavigate={onNavigate} />
-            </div>
+            {/* Web OS Dock (draggable/resizable/hideable) */}
+            {dockState.visible ? (
+                <div 
+                    className="absolute z-30 hidden md:flex flex-col gap-1 pointer-events-auto"
+                    style={{ top: dockState.y, left: dockState.x, width: dockState.width }}
+                >
+                    <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-gray-500 px-2">
+                        <span className="font-bold">Shortcuts</span>
+                        <div className="flex items-center gap-1">
+                            <button onMouseDown={startDockResize} className="p-1 rounded hover:bg-white/10 text-gray-400" title="Resize">↔</button>
+                            <button onClick={() => setDockState(s => ({ ...s, visible: false }))} className="p-1 rounded hover:bg-white/10 text-gray-400" title="Hide">✕</button>
+                        </div>
+                    </div>
+                    <div onMouseDown={startDockDrag} className="cursor-move active:cursor-grabbing">
+                        <WebOsDock onNavigate={onNavigate} />
+                    </div>
+                </div>
+            ) : (
+                <button 
+                    className="absolute top-4 left-4 z-30 hidden md:flex items-center gap-2 px-3 py-2 rounded-full bg-[#0e111a]/80 border border-white/10 text-xs text-gray-300 shadow-lg hover:border-aussie-500/40"
+                    onClick={() => setDockState(s => ({ ...s, visible: true }))}
+                >
+                    Open Shortcuts
+                </button>
+            )}
 
             {/* Desktop Icons Layer */}
             <div className="absolute inset-0 z-10 overflow-hidden">
@@ -439,7 +547,13 @@ export const Dashboard: React.FC<Props> = memo(({ onNavigate, activeView }) => {
             
             {/* Widgets */}
             {widgets.map(widget => (
-                 <div key={widget.id} className="absolute z-20 pointer-events-auto" style={{ top: widget.y, left: widget.x }}>
+                 <div 
+                    key={widget.id} 
+                    className="absolute z-20 pointer-events-auto cursor-move active:cursor-grabbing"
+                    style={{ top: widget.y, left: widget.x }}
+                    onMouseDown={(e) => handleWidgetMouseDown(e, widget)}
+                    onTouchStart={(e) => handleWidgetMouseDown(e, widget)}
+                 >
                     {widget.type === 'clock' && <ClockWidget onClose={() => removeWidget(widget.id)} />}
                     {widget.type === 'note' && <NoteWidget id={widget.id} initialContent={widget.data?.content} color={widget.data?.color} onClose={() => removeWidget(widget.id)} />}
                  </div>
