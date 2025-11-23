@@ -149,7 +149,7 @@ const App: React.FC = () => {
     const isMobileBrowserSplit = isMobile && activeView === 'browser' && chatOpen;
 
     return (
-        <div className="fixed inset-0 flex flex-col bg-os-bg text-os-text overflow-hidden font-sans">
+        <div className="fixed inset-0 flex bg-os-bg text-os-text overflow-hidden font-sans">
             <Suspense fallback={null}>
                 <NotificationCenter />
             </Suspense>
@@ -157,21 +157,52 @@ const App: React.FC = () => {
                 <Spotlight isOpen={showSpotlight} onClose={() => setShowSpotlight(false)} onNavigate={handleNavigate} />
             </Suspense>
 
-            {/* Activity Bar */}
-            <div className={`${isMobile ? 'fixed bottom-0 left-0 right-0 h-[70px] z-[60] bg-[#0a0c10] border-t border-os-border pb-safe' : 'flex flex-col w-16 border-r border-os-border bg-os-bg py-4 items-center z-30'}`}>
+            {/* Activity Bar - Left Sidebar */}
+            {!isMobile && (
                 <Suspense fallback={<ComponentLoader />}>
-                    <ActivityBar activeView={activeView} onNavigate={handleNavigate} onSpotlight={() => setShowSpotlight(true)} isMobile={isMobile} onChatToggle={() => setChatOpen(!chatOpen)} />
+                    <ActivityBar activeView={activeView} onNavigate={handleNavigate} onSpotlight={() => setShowSpotlight(true)} isMobile={false} onChatToggle={() => setChatOpen(!chatOpen)} />
                 </Suspense>
-            </div>
+            )}
+
+            {/* Mobile Bottom Nav */}
+            {isMobile && (
+                <div className="fixed bottom-0 left-0 right-0 h-[70px] z-[60] bg-[#0a0c10] border-t border-os-border pb-safe">
+                    <Suspense fallback={<ComponentLoader />}>
+                        <ActivityBar activeView={activeView} onNavigate={handleNavigate} onSpotlight={() => setShowSpotlight(true)} isMobile={true} onChatToggle={() => setChatOpen(!chatOpen)} />
+                    </Suspense>
+                </div>
+            )}
 
             <div className={`flex flex-1 min-w-0 relative ${isMobile ? 'pb-[70px]' : ''}`}>
-                {/* Chat Drawer */}
+                {/* Main Content Area - Center */}
+                <div className={`flex-1 flex flex-col min-h-0 relative ${isMobileBrowserSplit ? 'h-[55%]' : 'h-full'}`}>
+                    <Suspense fallback={<ComponentLoader />}>
+                        <Workspace
+                            activeView={activeView}
+                            onNavigate={handleNavigate}
+                            onSendMessage={handleSendMessage}
+                            setChatOpen={setChatOpen}
+                            isMobile={isMobile}
+                            editorTabs={editorTabs}
+                            activeTabPath={activeTabPath}
+                            setActiveTabPath={setActiveTabPath}
+                            activePanel={activePanel}
+                            setActivePanel={setActivePanel}
+                            terminalBlocks={terminalBlocks}
+                            openFile={openFile}
+                            mobileCodeView={mobileCodeView}
+                            setMobileCodeView={setMobileCodeView}
+                        />
+                    </Suspense>
+                </div>
+
+                {/* Chat Panel - Right Sidebar */}
                 <div className={`
-                    ${isMobile 
-                        ? isMobileBrowserSplit 
-                            ? 'absolute bottom-0 left-0 right-0 h-[45%] z-50 border-t border-os-border shadow-2xl bg-[#14161b] flex flex-col' 
-                            : `absolute inset-0 z-50 bg-os-bg/95 backdrop-blur-xl transition-transform duration-300 ease-out flex flex-col ${chatOpen ? 'translate-y-0' : 'translate-y-[110%]'}` 
-                        : `relative flex flex-col bg-os-bg ${chatOpen ? 'w-[360px] border-r border-os-border' : 'hidden'}`}
+                    ${isMobile
+                        ? isMobileBrowserSplit
+                            ? 'absolute bottom-0 left-0 right-0 h-[45%] z-50 border-t border-os-border shadow-2xl bg-[#14161b] flex flex-col'
+                            : `absolute inset-0 z-50 bg-os-bg/95 backdrop-blur-xl transition-transform duration-300 ease-out flex flex-col ${chatOpen ? 'translate-y-0' : 'translate-y-[110%]'}`
+                        : `relative flex flex-col bg-os-bg ${chatOpen ? 'w-[360px] border-l border-os-border' : 'hidden'}`}
                 `}>
                     <div className="h-12 border-b border-os-border flex items-center justify-between px-4 bg-os-panel shrink-0 pt-safe">
                         <div className="flex items-center gap-3">
@@ -212,28 +243,6 @@ const App: React.FC = () => {
                             <Resizable direction="horizontal" mode="parent" minSize={300} maxSize={600} />
                         </Suspense>
                     )}
-                </div>
-
-                {/* Main Content Area */}
-                <div className={`flex-1 flex flex-col min-h-0 relative ${isMobileBrowserSplit ? 'h-[55%]' : 'h-full'}`}>
-                    <Suspense fallback={<ComponentLoader />}>
-                        <Workspace
-                            activeView={activeView}
-                            onNavigate={handleNavigate}
-                            onSendMessage={handleSendMessage}
-                            setChatOpen={setChatOpen}
-                            isMobile={isMobile}
-                            editorTabs={editorTabs}
-                            activeTabPath={activeTabPath}
-                            setActiveTabPath={setActiveTabPath}
-                            activePanel={activePanel}
-                            setActivePanel={setActivePanel}
-                            terminalBlocks={terminalBlocks}
-                            openFile={openFile}
-                            mobileCodeView={mobileCodeView}
-                            setMobileCodeView={setMobileCodeView}
-                        />
-                    </Suspense>
                 </div>
             </div>
 
