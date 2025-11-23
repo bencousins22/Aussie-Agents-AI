@@ -332,21 +332,31 @@ const App: React.FC = () => {
                                 </div>
                             )}
                         </div>
-                        <div className="border-t border-os-border bg-os-bg shrink-0 p-3 pb-safe">
+                        <div className="border-t border-os-border bg-os-bg/95 backdrop-blur-sm shrink-0 p-3 pb-safe space-y-2">
+                            <div className="flex items-center justify-between text-[11px] text-gray-500 px-1">
+                                <div className="flex items-center gap-2">
+                                    <span className="px-2 py-1 rounded-full bg-aussie-500/10 text-aussie-500 border border-aussie-500/20 font-semibold">Gemini 2.5 Pro</span>
+                                    {isProcessing && <span className="w-2 h-2 rounded-full bg-aussie-500 animate-pulse" aria-label="Processing" />}
+                                </div>
+                                <div className="flex items-center gap-2 text-[10px]">
+                                    <button onClick={() => handleSendMessage("/analyze codebase")} className="px-2 py-1 rounded-lg bg-white/5 border border-white/10 hover:border-aussie-500/40 text-gray-300">Analyze</button>
+                                    <button onClick={() => handleSendMessage("Summarize recent changes")} className="px-2 py-1 rounded-lg bg-white/5 border border-white/10 hover:border-aussie-500/40 text-gray-300">Summarize</button>
+                                </div>
+                            </div>
                             <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])} />
                             <div className="flex items-end gap-2">
-                                <button onClick={() => fileInputRef.current?.click()} className="p-3 rounded-full bg-white/5 text-gray-400 hover:text-white"><Plus className="w-5 h-5" /></button>
-                                <div className="flex-1 bg-[#1c2128] border border-gray-700 rounded-2xl flex items-end relative min-h-[48px]">
+                                <button onClick={() => fileInputRef.current?.click()} className="p-3 rounded-full bg-white/5 text-gray-400 hover:text-white border border-white/10 hover:border-aussie-500/40 transition-colors"><Plus className="w-5 h-5" /></button>
+                                <div className="flex-1 bg-[#0f131a]/80 border border-white/10 rounded-2xl flex items-end relative min-h-[52px] shadow-inner shadow-black/40">
                                     <textarea 
                                         value={input} onChange={(e) => { setInput(e.target.value); e.target.style.height='auto'; e.target.style.height=`${Math.min(e.target.scrollHeight,120)}px`; }}
                                         placeholder={isLive ? "Listening..." : "Message..."}
-                                        className="w-full bg-transparent text-white text-[16px] px-4 py-3 max-h-32 outline-none resize-none" // 16px for mobile
-                                        rows={1} style={{ height: '48px' }}
+                                        className="w-full bg-transparent text-white text-[16px] px-4 py-3 max-h-32 outline-none resize-none placeholder:text-gray-600" // 16px for mobile
+                                        rows={1} style={{ height: '52px' }}
                                         onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
                                     />
-                                    <button onClick={toggleLive} className={`absolute right-2 bottom-2 p-2 rounded-full ${isLive ? 'text-red-500 bg-red-500/10 animate-pulse' : 'text-gray-400'}`}>{isLive ? <Mic className="w-5 h-5"/> : <MicOff className="w-5 h-5"/>}</button>
+                                    <button onClick={toggleLive} className={`absolute right-2 bottom-2 p-2 rounded-full border ${isLive ? 'text-red-500 bg-red-500/10 border-red-500/40 animate-pulse' : 'text-gray-400 border-white/10 hover:border-aussie-500/40'}`}>{isLive ? <Mic className="w-5 h-5"/> : <MicOff className="w-5 h-5"/>}</button>
                                 </div>
-                                <button onClick={() => handleSendMessage()} disabled={!input.trim() && !isLive} className={`p-3 rounded-full shrink-0 ${input.trim() ? 'bg-aussie-500 text-black' : 'bg-white/10 text-gray-500'}`}><ArrowUp className="w-5 h-5 stroke-[3]" /></button>
+                                <button onClick={() => handleSendMessage()} disabled={!input.trim() && !isLive} className={`p-3 rounded-full shrink-0 border ${input.trim() ? 'bg-aussie-500 text-black border-transparent shadow-[0_0_14px_-6px_rgba(0,229,153,0.6)]' : 'bg-white/5 text-gray-500 border-white/10'}`}><ArrowUp className="w-5 h-5 stroke-[3]" /></button>
                             </div>
                         </div>
                     </div>
