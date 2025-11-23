@@ -2,7 +2,7 @@
 import React, { useState, useEffect, memo, useRef } from 'react';
 import { fs } from '../services/fileSystem';
 import { Bot, Terminal, Globe, FileText, Rocket, Github, Folder, FilePlus, StickyNote, RefreshCw, Settings, Trash2, LayoutGrid, Zap, Monitor, Image as ImageIcon, AlignLeft, Grid, Code2, Calendar } from 'lucide-react';
-import { MainView, DesktopItem, Widget } from '../types';
+import { MainView, DesktopItem, Widget, OSWindow } from '../types';
 import { notify } from '../services/notification';
 import { dashboardState, Wallpaper } from '../services/dashboardState';
 import { wm } from '../services/windowManager';
@@ -56,6 +56,7 @@ export const Dashboard: React.FC<Props> = memo(({ onNavigate }) => {
     const [contextMenu, setContextMenu] = useState<{ x: number, y: number } | null>(null);
     const [iconPositions, setIconPositions] = useState<Record<string, IconPosition>>({});
     const [containerSize, setContainerSize] = useState({ width: window.innerWidth, height: window.innerHeight });
+    const [openWindows, setOpenWindows] = useState<OSWindow[]>([]);
     
     const [dragTarget, setDragTarget] = useState<string | null>(null);
     const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -86,11 +87,14 @@ export const Dashboard: React.FC<Props> = memo(({ onNavigate }) => {
         window.addEventListener('resize', handleResize);
         handleResize();
 
+        const unsubWindows = wm.subscribe((wins) => setOpenWindows(wins));
+
         return () => {
             clearInterval(i);
             unsub();
             window.removeEventListener('click', closeMenu);
             window.removeEventListener('resize', handleResize);
+            unsubWindows();
         };
     }, []);
 
@@ -293,6 +297,50 @@ export const Dashboard: React.FC<Props> = memo(({ onNavigate }) => {
             onTouchMove={handleMove}
             onTouchEnd={handleEnd}
         >
+            {/* Command Center Overlay */}
+            <div className="absolute inset-x-6 top-6 pb-20 z-20 pointer-events-none">
+                <div className="max-w-6xl mx-auto space-y-4 pointer-events-auto">
+                    {/* Hero */}
+                    <div className="w-full rounded-3xl border border-white/10 bg-gradient-to-r from-[#0b1f1a] via-[#0f1423] to-[#0c0f18] p-6 md:p-8 shadow-2xl shadow-black/40 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                        <div className="space-y-3">
+                            <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-aussie-500">Aussie OS Command Center</div>
+                            <div className="text-2xl md:text-3xl font-bold text-white leading-tight">All components, one launchpad.</div>
+                            <div className="text-sm text-gray-400 max-w-xl">Jump into any workspace: code, browser, flow, scheduler, deploy, marketplace, GitHub, and chat/agent.</div>
+                            <div className="flex flex-wrap gap-2">
+                                <button onClick={() => onNavigate('code')} className="px-4 py-2 rounded-lg bg-aussie-500 text-black font-bold text-sm shadow-lg shadow-aussie-500/20 hover:bg-aussie-600 active:scale-95 transition-transform">Open Code</button>
+                                <button onClick={() => onNavigate('browser')} className="px-4 py-2 rounded-lg bg-white/10 border border-white/10 text-white text-sm hover:border-aussie-500/40 hover:bg-aussie-500/5">Open Browser</button>
+                                <button onClick={() => onNavigate('marketplace')} className="px-4 py-2 rounded-lg bg-white/10 border border-white/10 text-white text-sm hover:border-aussie-500/40 hover:bg-aussie-500/5">App Store</button>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 w-full md:w-[320px] text-xs">
+                            <QuickStat label="Open Windows" value={openWindows.length.toString()} />
+                            <QuickStat label="Widgets" value={widgets.length.toString()} />
+                            <QuickStat label="Desktop Items" value={icons.length.toString()} />
+                            <QuickStat label="Active View" value={activeView.toUpperCase()} />
+                        </div>
+                    </div>
+
+                    {/* App Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {[...NAV_ITEMS].map(item => (
+                            <button
+                                key={item.view}
+                                onClick={() => onNavigate(item.view as MainView)}
+                                className={`group w-full text-left rounded-2xl border border-white/10 bg-[#0e111a]/85 backdrop-blur-xl p-4 flex items-center gap-3 hover:border-aussie-500/40 hover:bg-aussie-500/5 transition-colors shadow-lg shadow-black/30 ${activeView === item.view ? 'ring-1 ring-aussie-500/40' : ''}`}
+                            >
+                                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-aussie-500">
+                                    <item.icon className="w-5 h-5" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-bold text-white truncate">{item.tooltip}</div>
+                                    <div className="text-[11px] text-gray-500 uppercase tracking-wider">Launch</div>
+                                </div>
+                                <div className="text-[10px] text-gray-500 group-hover:text-aussie-500">→</div>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
             {/* Left Sidebar: All components quick-launch */}
             <div className="absolute inset-y-4 left-4 w-64 bg-[#0f1216]/80 backdrop-blur-xl border border-white/5 rounded-2xl shadow-2xl shadow-black/30 z-30 hidden xl:flex flex-col">
                 <div className="px-4 py-3 border-b border-white/5 flex items-center gap-2">
@@ -470,4 +518,11 @@ const ContextItem = ({ icon: Icon, label, onClick }: any) => (
         <Icon className="w-4 h-4 text-gray-500 group-hover:text-black" />
         <span className="text-xs font-bold">{label}</span>
     </button>
+);
+
+const QuickStat: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+    <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-2">
+        <div className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">{label}</div>
+        <div className="text-lg font-bold text-white">{value}</div>
+    </div>
 );
