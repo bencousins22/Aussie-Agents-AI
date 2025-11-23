@@ -289,19 +289,57 @@ const App: React.FC = () => {
             )}
 
             <div className={`flex flex-1 min-w-0 relative overflow-hidden justify-start items-stretch ${isMobile ? 'pb-[70px]' : ''}`}>
-                {/* Chat Panel - Left rail on desktop, overlay on mobile */}
+                {/* Main Content Area - Left/Center */}
+                <div className={`flex-1 flex flex-col min-h-0 min-w-0 relative order-first ${isMobileBrowserSplit ? 'h-[55%]' : 'h-full'}`}>
+                    <div className="w-full h-full px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 overflow-auto">
+                        <Suspense fallback={<ComponentLoader />}>
+                            <Workspace
+                                activeView={activeView}
+                                onNavigate={handleNavigate}
+                                onSendMessage={handleSendMessage}
+                                setChatOpen={setChatOpen}
+                                isMobile={isMobile}
+                                editorTabs={editorTabs}
+                                activeTabPath={activeTabPath}
+                                setActiveTabPath={setActiveTabPath}
+                                activePanel={activePanel}
+                                setActivePanel={setActivePanel}
+                                terminalBlocks={terminalBlocks}
+                                openFile={openFile}
+                                mobileCodeView={mobileCodeView}
+                                setMobileCodeView={setMobileCodeView}
+                                onCursorChange={setCursorLocation}
+                            />
+                        </Suspense>
+                    </div>
+                </div>
+
+                {!isMobile && chatOpen && (
+                    <Suspense fallback={null}>
+                        <Resizable
+                            direction="horizontal"
+                            mode="next"
+                            reversed={true}
+                            minSize={320}
+                            maxSize={480}
+                            onResize={(w) => setChatWidth(clampChatWidth(w, window.innerWidth))}
+                        />
+                    </Suspense>
+                )}
+
+                {/* Chat Panel - Right rail on desktop, overlay on mobile */}
                 <div
                     className={`
                         ${isMobile
                             ? isMobileBrowserSplit
                                 ? 'absolute bottom-0 left-0 right-0 h-[45%] z-50 border-t border-os-border shadow-2xl bg-[#14161b] flex flex-col min-w-0'
                                 : `absolute inset-0 z-50 bg-os-bg/95 backdrop-blur-xl transition-transform duration-300 ease-out flex flex-col min-w-0 ${chatOpen ? 'translate-y-0' : 'translate-y-[110%]'}`
-                            : `relative order-first flex flex-row bg-os-bg min-w-[240px] max-w-[360px] flex-shrink-0 ${chatOpen ? 'border-r border-os-border' : 'hidden'}`}
+                            : `relative order-last flex flex-row bg-[#0d1117] min-w-[320px] max-w-[480px] flex-shrink-0 ${chatOpen ? 'border-l border-white/10' : 'hidden'}`}
                     `}
                     style={!isMobile && chatOpen ? { width: `${chatWidth}px` } : undefined}
                 >
                     <div className="flex-1 min-h-0 flex flex-col">
-                        <div className="h-14 md:h-16 border-b border-os-border flex items-center justify-between px-4 md:px-5 lg:px-6 bg-os-panel shrink-0 pt-safe">
+                        <div className="h-14 md:h-16 border-b border-white/10 flex items-center justify-between px-4 md:px-5 lg:px-6 bg-[#161b22]/95 backdrop-blur-md shrink-0 pt-safe shadow-lg">
                             <div className="flex items-center gap-3">
                                 <div className={`w-2.5 h-2.5 rounded-full ${isProcessing || isLive ? 'bg-aussie-500 animate-pulse shadow-glow' : 'bg-aussie-500'}`} />
                                 <span className="font-bold text-sm md:text-base text-white">Aussie Agent</span>
@@ -332,7 +370,7 @@ const App: React.FC = () => {
                                 </div>
                             )}
                         </div>
-                        <div className="border-t border-os-border bg-os-bg/95 backdrop-blur-sm shrink-0 p-3 md:p-4 pb-safe space-y-3">
+                        <div className="border-t border-white/10 bg-[#0d1117]/95 backdrop-blur-sm shrink-0 p-3 md:p-4 pb-safe space-y-3">
                             <div className="flex items-center justify-between text-xs md:text-sm text-gray-500 px-1">
                                 <div className="flex items-center gap-2 md:gap-3">
                                     <span className="px-2.5 py-1.5 rounded-lg bg-aussie-500/10 text-aussie-500 border border-aussie-500/20 font-semibold text-xs">Gemini 2.5 Pro</span>
@@ -359,43 +397,6 @@ const App: React.FC = () => {
                                 <button onClick={() => handleSendMessage()} disabled={!input.trim() && !isLive} className={`p-3 md:p-3.5 rounded-xl shrink-0 border transition-all ${input.trim() ? 'bg-aussie-500 text-black border-transparent shadow-glow hover:bg-aussie-600 active:scale-95' : 'bg-white/5 text-gray-500 border-white/10'}`}><ArrowUp className="w-5 h-5 md:w-6 md:h-6 stroke-[3]" /></button>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                {!isMobile && chatOpen && (
-                    <Suspense fallback={null}>
-                        <Resizable
-                            direction="horizontal"
-                            mode="next"
-                            minSize={320}
-                            maxSize={480}
-                            onResize={(w) => setChatWidth(clampChatWidth(w, window.innerWidth))}
-                        />
-                    </Suspense>
-                )}
-
-                {/* Main Content Area - Center */}
-                <div className={`flex-1 flex flex-col min-h-0 min-w-0 relative order-last ${isMobileBrowserSplit ? 'h-[55%]' : 'h-full'}`}>
-                    <div className="w-full h-full px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 overflow-auto">
-                        <Suspense fallback={<ComponentLoader />}>
-                            <Workspace
-                                activeView={activeView}
-                                onNavigate={handleNavigate}
-                                onSendMessage={handleSendMessage}
-                                setChatOpen={setChatOpen}
-                                isMobile={isMobile}
-                                editorTabs={editorTabs}
-                                activeTabPath={activeTabPath}
-                                setActiveTabPath={setActiveTabPath}
-                                activePanel={activePanel}
-                                setActivePanel={setActivePanel}
-                                terminalBlocks={terminalBlocks}
-                                openFile={openFile}
-                                mobileCodeView={mobileCodeView}
-                                setMobileCodeView={setMobileCodeView}
-                                onCursorChange={setCursorLocation}
-                            />
-                        </Suspense>
                     </div>
                 </div>
             </div>
