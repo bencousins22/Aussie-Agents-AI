@@ -19,6 +19,7 @@ const StatusBar = lazy(() => import('./components/StatusBar').then(m => ({ defau
 const Resizable = lazy(() => import('./components/Resizable').then(m => ({ default: m.Resizable })));
 const MobileSidebar = lazy(() => import('./components/MobileSidebar').then(m => ({ default: m.MobileSidebar })));
 const Workspace = lazy(() => import('./components/Workspace').then(m => ({ default: m.Workspace })));
+const TerminalView = lazy(() => import('./components/TerminalView').then(m => ({ default: m.TerminalView })));
 
 // Loading fallback component
 const ComponentLoader = () => (
@@ -344,9 +345,23 @@ const App: React.FC = () => {
                             {isMobile && <button onClick={() => setChatOpen(false)} className="p-2 text-gray-400"><ChevronDown className="w-5 h-5" /></button>}
                         </div>
                     </div>
-                    <Suspense fallback={<ComponentLoader />}>
-                        <ChatInterface messages={messages} onQuickAction={handleSendMessage} isProcessing={isProcessing} />
-                    </Suspense>
+                    <div className="flex-1 min-h-0 flex flex-col">
+                        <Suspense fallback={<ComponentLoader />}>
+                            <ChatInterface messages={messages} onQuickAction={handleSendMessage} isProcessing={isProcessing} />
+                        </Suspense>
+                        {!isMobile && activeView === 'code' && (
+                            <div className="h-[200px] border-t border-os-border bg-os-bg/80">
+                                <div className="h-9 flex items-center px-3 border-b border-os-border text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                                    Quick Terminal
+                                </div>
+                                <div className="h-[calc(100%-36px)] overflow-hidden">
+                                    <Suspense fallback={<ComponentLoader />}>
+                                        <TerminalView blocks={terminalBlocks} isMobile={false} />
+                                    </Suspense>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                     <div className="border-t border-os-border bg-os-bg shrink-0 p-3 pb-safe">
                         <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])} />
                         <div className="flex items-end gap-2">

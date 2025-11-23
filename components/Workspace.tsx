@@ -88,7 +88,7 @@ export const Workspace: React.FC<WorkspaceProps> = ({
                         />
                     </div>
                     <Resizable direction="vertical" mode="next" reversed={true} />
-                    <div className="h-[280px] flex flex-col bg-os-bg shrink-0 border-t border-os-border">
+                    <div className="h-[200px] flex flex-col bg-os-bg shrink-0 border-t border-os-border">
                         <div className="h-8 flex items-center px-2 border-b border-os-border gap-4 bg-os-panel shrink-0">
                             <button onClick={() => setActivePanel('terminal')} className={`text-[10px] font-bold uppercase tracking-wider h-full px-2 border-b-2 ${activePanel === 'terminal' ? 'border-aussie-500 text-white' : 'border-transparent text-gray-500'}`}>Terminal</button>
                             <button onClick={() => setActivePanel('problems')} className={`text-[10px] font-bold uppercase tracking-wider h-full px-2 border-b-2 ${activePanel === 'problems' ? 'border-aussie-500 text-white' : 'border-transparent text-gray-500'}`}>Problems</button>
