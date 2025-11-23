@@ -121,6 +121,7 @@ const App: React.FC = () => {
             if (view === 'browser') setChatOpen(true);
             setShowMobileMenu(false);
         }
+        if (!showSidebar) setShowSidebar(true);
     };
 
     const handleSendMessage = async (text: string = input) => {
@@ -188,9 +189,28 @@ const App: React.FC = () => {
 
             {/* Activity Bar - Left Sidebar */}
             {!isMobile && (
-                <Suspense fallback={<ComponentLoader />}>
-                    <ActivityBar activeView={activeView} onNavigate={handleNavigate} onSpotlight={() => setShowSpotlight(true)} isMobile={false} onChatToggle={() => setChatOpen(!chatOpen)} />
-                </Suspense>
+                <div className={`h-full transition-transform duration-300 ${showSidebar ? 'translate-x-0' : '-translate-x-full'}`}>
+                    <Suspense fallback={<ComponentLoader />}>
+                        <ActivityBar 
+                            activeView={activeView} 
+                            onNavigate={handleNavigate} 
+                            onSpotlight={() => setShowSpotlight(true)} 
+                            isMobile={false} 
+                            onChatToggle={() => setChatOpen(!chatOpen)} 
+                        />
+                    </Suspense>
+                </div>
+            )}
+
+            {/* Sidebar toggle button for desktop */}
+            {!isMobile && (
+                <button 
+                    onClick={() => setShowSidebar(!showSidebar)} 
+                    className="absolute top-3 left-3 z-[65] p-2 rounded-full bg-[#0f1216]/80 border border-white/10 text-gray-300 hover:text-white hover:border-aussie-500/50 transition-colors"
+                    aria-label="Toggle sidebar"
+                >
+                    <ChevronDown className={`w-4 h-4 transition-transform ${showSidebar ? '-rotate-90' : 'rotate-90'}`} />
+                </button>
             )}
 
             {/* Mobile Bottom Nav */}
@@ -297,3 +317,4 @@ const App: React.FC = () => {
 };
 
 export default App;
+    const [showSidebar, setShowSidebar] = useState(true);
