@@ -6,6 +6,8 @@ import {
 import { FileStat, ShellResult } from '../types';
 import { wasmRuntime, WasmRuntimeState } from '../services/wasmLinux';
 import { shell } from '../services/shell';
+import { scheduler } from '../services/scheduler';
+import { notify } from '../services/notification';
 
 interface Props {
     onRunCommand?: (cmd: string) => Promise<ShellResult | void>;
@@ -49,6 +51,19 @@ export const WasmLinuxView: React.FC<Props> = ({ onRunCommand }) => {
         { label: 'Restart orchestrator', cmd: 'gemini-flow init' },
     ]), []);
 
+    const automationSets = useMemo(() => ([
+        { name: 'Health Check', commands: ['uname -a', 'gemini-flow hive-mind --objective "status"'] },
+        { name: 'System Refresh', commands: ['ls /workspace', 'gemini-flow run-flow core-init'] },
+    ]), []);
+
+    const [history, setHistory] = useState<{command: string; output: string; status: 'ok' | 'error'; timestamp: number}[]>(() => {
+        try {
+            return JSON.parse(localStorage.getItem('wasmCommandHistory') || '[]');
+        } catch {
+            return [];
+        }
+    });
+
     const handleCommand = useCallback(async (cmdText: string) => {
         if (!cmdText.trim()) return;
         setRunningCmd(true);
@@ -57,11 +72,45 @@ export const WasmLinuxView: React.FC<Props> = ({ onRunCommand }) => {
                 ? onRunCommand
                 : async (cmd: string) => shell.execute(cmd);
             await wasmRuntime.runCommand(cmdText, executor);
+            const entry = {
+                command: cmdText,
+                output: wasmRuntime.getState().lastOutput || '',
+                status: 'ok' as const,
+                timestamp: Date.now()
+            };
+            setHistory(prev => {
+                const next = [...prev, entry].slice(-25);
+                localStorage.setItem('wasmCommandHistory', JSON.stringify(next));
+                return next;
+            });
         } finally {
             setRunningCmd(false);
             refreshFs(fsPath);
         }
     }, [fsPath, onRunCommand, refreshFs]);
+
+    const rerunHistory = (cmd: string) => {
+        setCommand(cmd);
+        handleCommand(cmd);
+    };
+
+    const scheduleHistoryCommand = (cmd: string) => {
+        const task = scheduler.addTask({
+            name: `Scheduled terminal: ${cmd.split(' ')[0]}`,
+            type: 'command',
+            action: cmd,
+            schedule: 'once',
+            nextRun: Date.now()
+        });
+        notify.info('Scheduler', `Command scheduled: ${task.name}`);
+    };
+
+    const runAutomation = async (commands: string[]) => {
+        for (const cmd of commands) {
+            await handleCommand(cmd);
+            await new Promise(r => setTimeout(r, 400));
+        }
+    };
 
     const toggleNetwork = () => {
         wasmRuntime.updatePermissions({ network: state.permissions.network === 'allow' ? 'deny' : 'allow' });
@@ -189,6 +238,42 @@ export const WasmLinuxView: React.FC<Props> = ({ onRunCommand }) => {
                                 {q.label}
                             </button>
                         ))}
+                    </div>
+                    <div className="flex flex-col gap-2 pt-3">
+                        <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-gray-400">
+                            <Activity className="w-4 h-4 text-aussie-500" />
+                            Command History
+                        </div>
+                        <div className="max-h-32 overflow-y-auto border border-white/5 rounded-lg bg-[#0c0f14] p-2 space-y-2">
+                            {history.length === 0 && <div className="text-[11px] text-gray-500">No commands yet.</div>}
+                            {history.slice().reverse().map(entry => (
+                                <div key={entry.timestamp} className="rounded-lg border border-white/5 bg-white/5 p-2 text-[11px] flex flex-col gap-1">
+                                    <div className="flex items-center justify-between">
+                                        <span className="font-mono truncate">{entry.command}</span>
+                                        <span className={`text-[10px] ${entry.status === 'ok' ? 'text-emerald-300' : 'text-red-400'}`}>{entry.status}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-gray-400">
+                                        <span>{new Date(entry.timestamp).toLocaleTimeString()}</span>
+                                        <div className="flex gap-2">
+                                            <button onClick={() => rerunHistory(entry.command)} className="text-[10px] text-gray-300 hover:text-white">Run</button>
+                                            <button onClick={() => scheduleHistoryCommand(entry.command)} className="text-[10px] text-aussie-400 hover:text-white">Schedule</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            {automationSets.map(set => (
+                                <button
+                                    key={set.name}
+                                    onClick={() => runAutomation(set.commands)}
+                                    className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-300 hover:border-emerald-400 hover:text-white transition-colors"
+                                >
+                                    {set.name}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="text-[11px] text-gray-500">Automation sequences run each command sequentially and log the output.</div>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-gray-500">
                         <Sparkles className="w-4 h-4 text-amber-400" />
