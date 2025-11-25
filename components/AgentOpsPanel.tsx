@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
-import { Rocket, LayoutDashboard, Code2, Globe, Zap, X, Play, Repeat } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Rocket, LayoutDashboard, Code2, Globe, Zap, X, Play, Repeat, CalendarClock, Layers } from 'lucide-react';
 import { MainView } from '../types';
 import { agentDaemon } from '../services/agentDaemon';
+import { julesRest } from '../services/julesRest';
+import { scheduler } from '../services/scheduler';
+import { notify } from '../services/notification';
 
 interface Props {
     onNavigate: (view: MainView) => void;
@@ -12,6 +15,68 @@ interface Props {
 export const AgentOpsPanel: React.FC<Props> = ({ onNavigate, onSendMessage, onClose }) => {
     const [mission, setMission] = useState('Keep the workspace clean, run tests, and report status.');
     const [command, setCommand] = useState('');
+    const [sources, setSources] = useState<string[]>([]);
+    const [selectedSource, setSelectedSource] = useState('');
+    const [promptText, setPromptText] = useState('Create a security audit report for /workspace.');
+    const [autoApprove, setAutoApprove] = useState(true);
+    const [schedule, setSchedule] = useState<'once' | 'hourly' | 'daily' | 'interval'>('once');
+    const [intervalSeconds, setIntervalSeconds] = useState(3600);
+    const [builderMessage, setBuilderMessage] = useState<string | null>(null);
+
+    useEffect(() => {
+        let canceled = false;
+        const load = async () => {
+            try {
+                const body = await julesRest.listSources();
+                if (!canceled) {
+                    const items = body.sources?.map((s: any) => s.name).filter(Boolean) || [];
+                    setSources(items);
+                    if (!selectedSource && items.length) setSelectedSource(items[0]);
+                }
+            } catch (e: any) {
+                notify.error('Jules', 'Unable to list sources. Check API settings.');
+            }
+        };
+        load();
+        return () => { canceled = true; };
+    }, [selectedSource]);
+
+    const calculateNextRun = () => {
+        const now = Date.now();
+        if (schedule === 'once') return now + 1000;
+        if (schedule === 'hourly') return now + 60 * 60 * 1000;
+        if (schedule === 'daily') return now + 24 * 60 * 60 * 1000;
+        return now + (intervalSeconds * 1000);
+    };
+
+    const scheduleJulesSession = async () => {
+        if (!selectedSource) {
+            notify.error('Agent Builder', 'Select a source first.');
+            return;
+        }
+        const payload = {
+            prompt: promptText,
+            sourceContext: {
+                source: selectedSource,
+                githubRepoContext: {
+                    startingBranch: 'main'
+                }
+            },
+            automationMode: 'AUTO_CREATE_PR',
+            title: `Builder run ${new Date().toISOString()}`,
+            autoApprove: autoApprove
+        };
+        const nextRun = calculateNextRun();
+        const task = scheduler.addTask({
+            name: `Jules: ${promptText.slice(0, 20)}`,
+            type: 'jules',
+            action: JSON.stringify(payload),
+            schedule,
+            intervalSeconds: schedule === 'interval' ? intervalSeconds : undefined,
+            nextRun
+        });
+        setBuilderMessage(`Scheduled task ${task.name} for ${new Date(nextRun).toLocaleString()}`);
+    };
 
     const launchMission = () => {
         if (!mission.trim()) return;
@@ -70,6 +135,46 @@ export const AgentOpsPanel: React.FC<Props> = ({ onNavigate, onSendMessage, onCl
                                 Send
                             </button>
                         </div>
+                    </div>
+
+                    <div className="space-y-3 border-t border-white/10 pt-3">
+                        <div className="flex items-center gap-3 text-xs uppercase font-bold text-gray-400 tracking-widest">
+                            <CalendarClock className="w-4 h-4 text-aussie-400" />
+                            Agent Builder
+                        </div>
+                        <div className="space-y-2 text-[12px]">
+                            <label className="block text-gray-400">Jules Source</label>
+                            <select value={selectedSource} onChange={e => setSelectedSource(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white">
+                                {sources.map(src => (
+                                    <option key={src} value={src}>{src}</option>
+                                ))}
+                                {!sources.length && <option value="">No sources available</option>}
+                            </select>
+                        </div>
+                        <div className="space-y-2 text-[12px]">
+                            <label className="block text-gray-400">Prompt</label>
+                            <textarea value={promptText} onChange={e => setPromptText(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white" rows={2} />
+                        </div>
+                        <div className="flex items-center gap-2 text-[12px]">
+                            <input type="checkbox" checked={autoApprove} onChange={e => setAutoApprove(e.target.checked)} className="h-4 w-4 text-aussie-500" />
+                            <span>Auto approve plan</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-[12px]">
+                            <select value={schedule} onChange={e => setSchedule(e.target.value as any)} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2">
+                                <option value="once">Once</option>
+                                <option value="hourly">Hourly</option>
+                                <option value="daily">Daily</option>
+                                <option value="interval">Interval</option>
+                            </select>
+                            {schedule === 'interval' && (
+                                <input type="number" min={60} value={intervalSeconds} onChange={e => setIntervalSeconds(Number(e.target.value))} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white" placeholder="Interval sec" />
+                            )}
+                        </div>
+                        <button onClick={scheduleJulesSession} className="w-full py-2 rounded-lg bg-emerald-500 text-black font-bold text-sm hover:bg-emerald-400 transition-colors flex items-center justify-center gap-2">
+                            <Layers className="w-4 h-4" />
+                            Schedule Jules Agent
+                        </button>
+                        {builderMessage && <div className="text-xs text-emerald-300">{builderMessage}</div>}
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 text-[12px] text-gray-300">
