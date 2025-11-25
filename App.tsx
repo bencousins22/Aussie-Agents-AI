@@ -144,12 +144,12 @@ const VIEW_TITLES: Record<MainView, string> = {
 };
 
 const App: React.FC = () => {
-    const [activeView, setActiveView] = useState<MainView>(() => {
+const [activeView, setActiveView] = useState<MainView>(() => {
         try {
             const stored = localStorage.getItem(VIEW_KEY) as MainView | null;
-            return stored || 'dashboard';
+            return stored || 'agentos';
         } catch {
-            return 'dashboard';
+            return 'agentos';
         }
     });
     const [input, setInput] = useState('');
