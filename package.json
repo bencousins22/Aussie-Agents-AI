@@ -14,7 +14,8 @@
     "lint": "tsc --noEmit",
     "clean": "rm -rf dist node_modules/.vite",
     "type-check": "tsc --noEmit",
-    "test": "jest"
+    "test": "jest",
+    "hyperliquid:bot": "node scripts/hyperliquid-bot.js"
   },
   "dependencies": {
     "@google/genai": "^1.30.0",

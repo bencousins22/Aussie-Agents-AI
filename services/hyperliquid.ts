@@ -1,6 +1,7 @@
 /**
- * Hyperliquid API client (no simulation).
- * Requires a real HTTP endpoint set via VITE_HYPERLIQUID_API.
+ * Hyperliquid API client that works in both browser (via Vite env)
+ * and Node (via HYPERLIQUID_API env). Intended for real API access
+ * through a proxy or direct endpoint.
  */
 
 export interface HlOrder {
@@ -14,7 +15,14 @@ export interface HlOrder {
 
 class HyperliquidService {
     private walletAddress: string | null = null;
-    private baseUrl: string | null = (import.meta as any).env?.VITE_HYPERLIQUID_API || null;
+    private baseUrl: string | null;
+    private extraHeaders: Record<string, string> = {};
+
+    constructor() {
+        const browserBase = (import.meta as any)?.env?.VITE_HYPERLIQUID_API;
+        const nodeBase = typeof process !== 'undefined' ? process.env.HYPERLIQUID_API : undefined;
+        this.baseUrl = nodeBase || browserBase || null;
+    }
 
     public isConfigured() {
         return !!this.baseUrl;
@@ -31,11 +39,20 @@ class HyperliquidService {
         return { status: 'connected', account: wallet };
     }
 
+    /**
+     * Configure the client at runtime (useful for Node bot).
+     */
+    public configure(config: { apiBase?: string; headers?: Record<string, string>; wallet?: string }) {
+        if (config.apiBase) this.baseUrl = config.apiBase;
+        if (config.headers) this.extraHeaders = config.headers;
+        if (config.wallet) this.walletAddress = config.wallet;
+    }
+
     public async getInfo(type: 'meta' | 'spotMeta' | 'clearinghouseState'): Promise<any> {
         this.ensureConfigured();
         const res = await fetch(`${this.baseUrl}/info`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...this.extraHeaders },
             body: JSON.stringify({ type, wallet: this.walletAddress })
         });
         if (!res.ok) throw new Error(`Hyperliquid info failed: ${res.status}`);
@@ -46,7 +63,7 @@ class HyperliquidService {
         this.ensureConfigured();
         const res = await fetch(`${this.baseUrl}/exchange`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...this.extraHeaders },
             body: JSON.stringify(action)
         });
         if (!res.ok) throw new Error(`Hyperliquid exchange failed: ${res.status}`);
@@ -57,7 +74,7 @@ class HyperliquidService {
         this.ensureConfigured();
         const res = await fetch(`${this.baseUrl}/backtest`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...this.extraHeaders },
             body: JSON.stringify(strategyParams)
         });
         if (!res.ok) throw new Error(`Hyperliquid backtest failed: ${res.status}`);
