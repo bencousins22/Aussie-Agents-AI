@@ -15,7 +15,8 @@
     "clean": "rm -rf dist node_modules/.vite",
     "type-check": "tsc --noEmit",
     "test": "jest",
-    "hyperliquid:bot": "node scripts/hyperliquid-bot.js"
+    "hyperliquid:bot": "node scripts/hyperliquid-bot.js",
+    "jules:demo": "node scripts/jules-api-demo.js"
   },
   "dependencies": {
     "@google/genai": "^1.30.0",

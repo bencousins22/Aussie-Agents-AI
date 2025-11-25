@@ -98,6 +98,26 @@ BROWSERLESS_API_KEY=your_browserless_api_key
 
 **Security Note:** Never commit `.env.local` to version control. API keys are injected at build time via Vite's `define` config.
 
+### Jules API
+Add:
+
+```env
+JULES_API_KEY=your_jules_api_key
+JULES_API_URL=https://jules.googleapis.com
+JULES_SOURCE=sources/github/owner/repo
+```
+
+Then run the quickstart helper:
+
+```bash
+npm run jules:demo status
+npm run jules:demo health
+npm run jules:demo sources
+npm run jules:demo session "Describe your task"
+```
+
+The `session` command creates a new Jules session using your configured `JULES_SOURCE`; update the prompt or automation mode as needed.
+
 ---
 
 ## Architecture
