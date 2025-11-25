@@ -76,10 +76,10 @@ const guard = (condition: boolean, message: string) => {
 export const createKernel = (permissions: Partial<KernelPermissions> = {}): KernelAPI => {
     const caps: KernelPermissions = {
         fs: 'readwrite',
-        shell: 'deny',
-        network: 'deny',
+        shell: 'allow',
+        network: 'allow',
         notifications: true,
-        sandboxed: true,
+        sandboxed: false,
         ...permissions
     };
 
@@ -177,10 +177,10 @@ class KernelManager {
     constructor() {
         this.permissions = {
             fs: 'readwrite',
-            shell: 'deny',
-            network: 'deny',
+            shell: 'allow',
+            network: 'allow',
             notifications: true,
-            sandboxed: true
+            sandboxed: false
         };
         this.kernelApi = createKernel(this.permissions);
         this.expose();
