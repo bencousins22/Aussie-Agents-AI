@@ -140,6 +140,7 @@ export const Marketplace: React.FC = memo(() => {
     }), [optimisticApps]);
 
     const openApp = (app: AppDefinition) => {
+        bus.emit('switch-view', { view: 'agentos' });
         wm.openWindow(app.id, app.name);
     };
 
