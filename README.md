@@ -120,6 +120,19 @@ The `session` command creates a new Jules session using your configured `JULES_S
 
 ---
 
+### Agent Builder & Execution Flow
+
+The Agent Builder UX wires Jules + Gemini Flow together:
+
+| Component | Connects to | Notes |
+|-----------|-------------|-------|
+| `AgentOpsPanel` builder card | `services/julesRest` + `scheduler` | Lets you compose an automated prompt, select a Jules source, and schedule a backend job that creates a Jules session via `julesRest`. |
+| Flow Automator card | `scheduler` + CLI shell | Takes a flow ID, role selection, and schedule, then writes a `flow` task whose action JSON is executed via `gemini-flow run-flow` with `--roles` on each tick. |
+| Scheduler service | `julesRest`, `shell` (`gemini-flow`), `notify` | Responsible for running scheduled `jules` tasks (creates sessions and approves plans) or `flow` tasks (runs a `gemini-flow` command with role args) when `nextRun` hits. |
+| Kernels + chat (`services/jules.ts`, `services/useAgent.ts`) | `services/julesRest` / Gemni SDK | Use the same credential store (`services/julesKeys.ts`) so chat, builder, and scheduler share the `JULES_API_KEY` + `JULES_API_URL`. The chat also pings `/status` before talking to the API. |
+
+This separation ensures users clearly see which UI controls talk to Jules (source/prompt) and which drive `gemini-flow` agents (flow ID + roles). Scheduler tasks tie them together without mixing runtime contexts.
+
 ## Architecture
 
 ### Technology Stack
