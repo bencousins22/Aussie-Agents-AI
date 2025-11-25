@@ -111,7 +111,7 @@ export interface Notification {
 export interface ScheduledTask {
     id: string;
     name: string;
-    type: 'command' | 'swarm' | 'flow';
+    type: 'command' | 'swarm' | 'flow' | 'jules';
     action: string;
     schedule: 'once' | 'hourly' | 'daily' | 'interval';
     intervalSeconds?: number;

@@ -4,6 +4,7 @@ import { fs } from './fileSystem';
 import { shell } from './shell';
 import { bus } from './eventBus';
 import { notify } from './notification';
+import { julesRest } from './julesRest';
 
 const TASKS_FILE = '/workspace/system/schedule.json';
 
@@ -99,6 +100,19 @@ class SchedulerService {
                 const flowId = task.action;
                 const res = await shell.execute(`gemini-flow run-flow ${flowId}`);
                 output = res.exitCode === 0 ? res.stdout : `Failed: ${res.stderr}`;
+            } else if (task.type === 'jules') {
+
+                try {
+                    const payload = task.action ? JSON.parse(task.action) : {};
+                    const session = await julesRest.createSession(payload);
+                    output = `Jules session ${session.id} created`;
+                    if (payload.autoApprove !== false) {
+                        await julesRest.approvePlan(session.id);
+                        output += ' (plan approved)';
+                    }
+                } catch (error: any) {
+                    output = `Jules error: ${error.message}`;
+                }
             }
         } catch (e: any) {
             output = `Error: ${e.message}`;
