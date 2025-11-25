@@ -12,6 +12,7 @@ import { deployment } from './deployment';
 
 import { browserAutomation } from './browserAutomation';
 import { getJulesApiKey } from './julesKeys';
+import { notify } from './notification';
 
 const uuid = () => Math.random().toString(36).substring(2, 15);
 
@@ -26,6 +27,9 @@ class JulesAgent {
     private messageHistory: Message[] = [];
     private isProcessing: boolean = false;
     private phase: WorkflowPhase = 'idle';
+    private retryTimer: ReturnType<typeof setTimeout> | null = null;
+    private retryAttempts = 0;
+    private readonly MAX_RATE_LIMIT_RETRIES = 3;
 
     private static instance: JulesAgent;
 
@@ -77,7 +81,7 @@ class JulesAgent {
     /**
      * Core Input Handler
      */
-    public async processInput(text: string) {
+    public async processInput(text: string, options: { retrying?: boolean } = {}) {
         if (!getJulesApiKey()) {
              this.addMessage('system', 'Error: API_KEY not found. Please check your environment variables.');
              return;
@@ -89,7 +93,13 @@ class JulesAgent {
 
         this.isProcessing = true;
         this.setPhase('planning');
-        this.addMessage('user', text);
+        if (!options.retrying) {
+            if (this.retryTimer) {
+                clearTimeout(this.retryTimer);
+                this.retryTimer = null;
+            }
+            this.addMessage('user', text);
+        }
 
         try {
             if (!this.chatSession) {
@@ -170,10 +180,15 @@ class JulesAgent {
                     this.isProcessing = false;
                 }
             }
+            this.retryAttempts = 0;
 
         } catch (error: any) {
             console.error(error);
+            if (this.handleRateLimitRetry(error, text)) {
+                return;
+            }
             this.addMessage('system', `System Error: ${error.message}`);
+            notify.error('Jules Error', error.message || 'An unexpected error occurred.');
         } finally {
             this.isProcessing = false;
             this.setPhase('idle');
@@ -246,6 +261,49 @@ class JulesAgent {
         } catch (e: any) {
             return { error: e.message };
         }
+    }
+
+    private handleRateLimitRetry(error: any, text: string): boolean {
+        const delayMs = this.extractRetryDelay(error);
+        if (!delayMs) return false;
+        if (this.retryAttempts >= this.MAX_RATE_LIMIT_RETRIES) {
+            this.addMessage('system', 'Jules rate limit persists. Please wait a minute or upgrade quota.');
+            notify.warning('Jules rate limit', 'Automatic retries paused after repeated failures.');
+            return true;
+        }
+
+        this.retryAttempts++;
+        const seconds = Math.max(1, Math.ceil(delayMs / 1000));
+        const message = `Quota exhausted (retrying in ${seconds}s). Jules will reattempt automatically.`;
+        this.addMessage('system', message);
+        notify.info('Jules rate limit', message);
+
+        if (this.retryTimer) clearTimeout(this.retryTimer);
+        this.retryTimer = globalThis.setTimeout(() => {
+            this.retryTimer = null;
+            void this.processInput(text, { retrying: true });
+        }, delayMs);
+
+        return true;
+    }
+
+    private extractRetryDelay(error: any): number | null {
+        const details = error?.details || error?.error?.details;
+        if (!Array.isArray(details)) return null;
+        const info = details.find((d: any) => typeof d?.['@type'] === 'string' && d['@type'].endsWith('/RetryInfo'));
+        if (!info) return null;
+        const delay = info.retryDelay;
+        if (!delay) return null;
+
+        if (typeof delay === 'string') {
+            const match = delay.match(/(\d+(?:\.\d+)?)s/);
+            if (match) return Math.floor(parseFloat(match[1]) * 1000);
+        } else if (typeof delay === 'object') {
+            const seconds = Number(delay.seconds || 0);
+            const nanos = Number(delay.nanos || 0);
+            return seconds * 1000 + Math.floor(nanos / 1e6);
+        }
+        return null;
     }
 
     private addMessage(role: Message['role'], text: string, sender?: string) {
