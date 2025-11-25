@@ -108,14 +108,16 @@ export const SettingsView: React.FC = () => {
 
                                     <div className="bg-[#0a0c10] rounded-lg border border-os-border p-4 flex flex-col justify-between gap-2">
                                     <div className="space-y-2">
-                                        <div className="text-xs font-bold text-os-textDim uppercase">Jules Trading API Key</div>
-                                        <p className="text-[10px] text-gray-500">Required for Jules kernel operations.</p>
-                                        <div className="flex gap-2">
-                                            <input type="password" value={julesKey} onChange={e => setJulesKey(e.target.value)} className="flex-1 bg-transparent border-b border-gray-700 py-1 text-xs font-mono text-white outline-none focus:border-aussie-500" placeholder="Enter Key..." />
-                                            <button onClick={handleJulesKeySave} className="text-xs font-bold text-aussie-500 hover:text-white">SAVE</button>
-                                        </div>
-                                        <div className="text-xs font-bold text-os-textDim uppercase">Jules API Endpoint</div>
-                                        <input value={julesUrl} onChange={e => setJulesUrl(e.target.value)} className="w-full bg-transparent border border-white/5 rounded px-3 py-2 text-xs font-mono text-white outline-none focus:border-aussie-500" placeholder="https://api.jules.dev/v1" />
+                                        <form className="space-y-2" onSubmit={e => e.preventDefault()}>
+                                            <div className="text-xs font-bold text-os-textDim uppercase">Jules Trading API Key</div>
+                                            <p className="text-[10px] text-gray-500">Required for Jules kernel operations.</p>
+                                            <div className="flex gap-2">
+                                                <input type="password" value={julesKey} onChange={e => setJulesKey(e.target.value)} className="flex-1 bg-transparent border-b border-gray-700 py-1 text-xs font-mono text-white outline-none focus:border-aussie-500" placeholder="Enter Key..." />
+                                                <button onClick={handleJulesKeySave} className="text-xs font-bold text-aussie-500 hover:text-white">SAVE</button>
+                                            </div>
+                                            <div className="text-xs font-bold text-os-textDim uppercase">Jules API Endpoint</div>
+                                            <input value={julesUrl} onChange={e => setJulesUrl(e.target.value)} className="w-full bg-transparent border border-white/5 rounded px-3 py-2 text-xs font-mono text-white outline-none focus:border-aussie-500" placeholder="https://api.jules.dev/v1" />
+                                        </form>
                                     </div>
                                     </div>
                                 </div>
