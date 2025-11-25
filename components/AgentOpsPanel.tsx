@@ -21,6 +21,11 @@ export const AgentOpsPanel: React.FC<Props> = ({ onNavigate, onSendMessage, onCl
     const [autoApprove, setAutoApprove] = useState(true);
     const [schedule, setSchedule] = useState<'once' | 'hourly' | 'daily' | 'interval'>('once');
     const [intervalSeconds, setIntervalSeconds] = useState(3600);
+    const [flowId, setFlowId] = useState('');
+    const [flowRoles, setFlowRoles] = useState<string[]>([]);
+    const [flowSchedule, setFlowSchedule] = useState<'once' | 'hourly' | 'daily' | 'interval'>('once');
+    const [flowIntervalSeconds, setFlowIntervalSeconds] = useState(3600);
+    const [flowMessage, setFlowMessage] = useState<string | null>(null);
     const [builderMessage, setBuilderMessage] = useState<string | null>(null);
 
     useEffect(() => {
@@ -41,14 +46,6 @@ export const AgentOpsPanel: React.FC<Props> = ({ onNavigate, onSendMessage, onCl
         return () => { canceled = true; };
     }, [selectedSource]);
 
-    const calculateNextRun = () => {
-        const now = Date.now();
-        if (schedule === 'once') return now + 1000;
-        if (schedule === 'hourly') return now + 60 * 60 * 1000;
-        if (schedule === 'daily') return now + 24 * 60 * 60 * 1000;
-        return now + (intervalSeconds * 1000);
-    };
-
     const scheduleJulesSession = async () => {
         if (!selectedSource) {
             notify.error('Agent Builder', 'Select a source first.');
@@ -66,7 +63,7 @@ export const AgentOpsPanel: React.FC<Props> = ({ onNavigate, onSendMessage, onCl
             title: `Builder run ${new Date().toISOString()}`,
             autoApprove: autoApprove
         };
-        const nextRun = calculateNextRun();
+        const nextRun = calculateNextRun(schedule, intervalSeconds);
         const task = scheduler.addTask({
             name: `Jules: ${promptText.slice(0, 20)}`,
             type: 'jules',
@@ -76,6 +73,40 @@ export const AgentOpsPanel: React.FC<Props> = ({ onNavigate, onSendMessage, onCl
             nextRun
         });
         setBuilderMessage(`Scheduled task ${task.name} for ${new Date(nextRun).toLocaleString()}`);
+    };
+
+
+    const toggleFlowRole = (role: string) => {
+        setFlowRoles(prev => prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]);
+    };
+
+    const scheduleFlowTask = () => {
+        if (!flowId.trim()) {
+            notify.error('Agent Builder', 'Provide a flow ID before scheduling.');
+            return;
+        }
+        const payload = {
+            flowId: flowId.trim(),
+            roles: flowRoles,
+        };
+        const nextRun = calculateNextRun(flowSchedule, flowIntervalSeconds);
+        const task = scheduler.addTask({
+            name: `Flow: ${flowId}`,
+            type: 'flow',
+            action: JSON.stringify(payload),
+            schedule: flowSchedule,
+            intervalSeconds: flowSchedule === 'interval' ? flowIntervalSeconds : undefined,
+            nextRun
+        });
+        setFlowMessage(`Scheduled ${task.name} at ${new Date(nextRun).toLocaleString()}`);
+    };
+
+    const calculateNextRun = (sched: string, secs: number) => {
+        const now = Date.now();
+        if (sched === 'once') return now + 1000;
+        if (sched === 'hourly') return now + 60 * 60 * 1000;
+        if (sched === 'daily') return now + 24 * 60 * 60 * 1000;
+        return now + (secs * 1000);
     };
 
     const launchMission = () => {
@@ -175,6 +206,42 @@ export const AgentOpsPanel: React.FC<Props> = ({ onNavigate, onSendMessage, onCl
                             Schedule Jules Agent
                         </button>
                         {builderMessage && <div className="text-xs text-emerald-300">{builderMessage}</div>}
+                    </div>
+
+                    <div className="space-y-4 border-t border-white/10 pt-4">
+                        <div className="flex items-center gap-2 text-xs uppercase font-bold text-gray-400 tracking-widest">
+                            <Layers className="w-4 h-4 text-aussie-400" />
+                            Flow Automator
+                        </div>
+                        <div className="space-y-2 text-[12px]">
+                            <label className="block text-gray-400">Flow ID</label>
+                            <input value={flowId} onChange={e => setFlowId(e.target.value)} placeholder="e.g. my-flow-123" className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white" />
+                        </div>
+                        <div className="space-y-2 text-[12px]">
+                            <label className="block text-gray-400">Agent Roles</label>
+                            <div className="flex flex-wrap gap-2">
+                                {['planner','coder','reviewer','tester','optimizer'].map(role => (
+                                    <button key={role} onClick={() => toggleFlowRole(role)} className={`px-3 py-1 rounded-full border transition ${flowRoles.includes(role) ? 'bg-aussie-500/20 border-aussie-500 text-aussie-300' : 'bg-white/5 border-white/20 text-gray-400 hover:border-white/50'}`}>
+                                        {role}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-[12px]">
+                            <select value={flowSchedule} onChange={e => setFlowSchedule(e.target.value as any)} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2">
+                                <option value="once">Once</option>
+                                <option value="hourly">Hourly</option>
+                                <option value="daily">Daily</option>
+                                <option value="interval">Interval</option>
+                            </select>
+                            {flowSchedule === 'interval' && (
+                                <input type="number" min={60} value={flowIntervalSeconds} onChange={e => setFlowIntervalSeconds(Number(e.target.value))} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white" placeholder="Interval sec" />
+                            )}
+                        </div>
+                        <button onClick={scheduleFlowTask} className="w-full py-2 rounded-lg bg-gradient-to-r from-aussie-500 to-emerald-400 text-black font-bold text-sm hover:opacity-90 transition-colors">
+                            Automate Flow
+                        </button>
+                        {flowMessage && <div className="text-xs text-emerald-300">{flowMessage}</div>}
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 text-[12px] text-gray-300">

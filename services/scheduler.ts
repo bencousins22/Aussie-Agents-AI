@@ -97,8 +97,21 @@ class SchedulerService {
                 output = res.stdout;
             } else if (task.type === 'flow') {
                 // Execute flow by ID using the shell gemini-flow command
-                const flowId = task.action;
-                const res = await shell.execute(`gemini-flow run-flow ${flowId}`);
+                let flowId = task.action;
+                let flowOptions: { roles?: string[] } | null = null;
+                if (task.action.startsWith('{')) {
+                    try {
+                        const parsed = JSON.parse(task.action);
+                        if (parsed.flowId) {
+                            flowId = parsed.flowId;
+                            flowOptions = parsed;
+                        }
+                    } catch {
+                        // Continue with raw string if parsing fails
+                    }
+                }
+                const roleArgs = flowOptions?.roles ? ` --roles ${flowOptions.roles.join(',')}` : '';
+                const res = await shell.execute(`gemini-flow run-flow ${flowId}${roleArgs}`);
                 output = res.exitCode === 0 ? res.stdout : `Failed: ${res.stderr}`;
             } else if (task.type === 'jules') {
 
