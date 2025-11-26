@@ -8,5 +8,6 @@
     "noEmit": false,
     "isolatedModules": false,
     "types": ["jest", "node"]
-  }
+  },
+  "include": ["**/*.ts", "**/*.tsx"]
 }

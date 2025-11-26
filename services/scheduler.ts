@@ -145,6 +145,12 @@ class SchedulerService {
             task.nextRun = now + (60 * 60 * 1000);
         } else if (task.schedule === 'daily') {
             task.nextRun = now + (24 * 60 * 60 * 1000);
+        } else if (task.schedule === 'weekly') {
+            task.nextRun = now + (7 * 24 * 60 * 60 * 1000);
+        } else if (task.schedule === 'monthly') {
+            const d = new Date(now);
+            d.setMonth(d.getMonth() + 1);
+            task.nextRun = d.getTime();
         }
 
         this.saveTasks();

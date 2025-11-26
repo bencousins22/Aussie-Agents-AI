@@ -1,8 +1,10 @@
 
 import React, { useEffect, useRef, useState, memo, useTransition, useOptimistic, useMemo } from 'react';
-import { Message, ChatSession } from '../types';
-import { Bot, Sparkles, ArrowRight, Zap, History, Save, ChevronDown, Copy, Check, ArrowDown, RefreshCw, Trash2, MessageSquare } from 'lucide-react';
+import { Message } from '../types';
+import { Bot, Sparkles, ArrowRight, Zap, History, Save, ChevronDown, Copy, Check, ArrowDown, RefreshCw, Trash2, MessageSquare, UploadCloud, DownloadCloud } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import { julesAgent } from '../services/jules';
+import { fs } from '../services/fileSystem';
 
 interface ChatInterfaceProps {
     messages: Message[];
@@ -13,32 +15,9 @@ interface ChatInterfaceProps {
 export const ChatInterface: React.FC<ChatInterfaceProps> = memo(({ messages, onQuickAction, isProcessing }) => {
     const scrollRef = useRef<HTMLDivElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const [sessions, setSessions] = useState<ChatSession[]>(() => {
-        try {
-            const saved = localStorage.getItem('aussie_chat_sessions');
-            return saved ? JSON.parse(saved) : [{ id: 'default', title: 'Current Session', messages: [], lastModified: Date.now() }];
-        } catch {
-            return [{ id: 'default', title: 'Current Session', messages: [], lastModified: Date.now() }];
-        }
-    });
-    const [currentSessionId, setCurrentSessionId] = useState('default');
     const [showSessions, setShowSessions] = useState(false);
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [showScrollButton, setShowScrollButton] = useState(false);
-    const [isPending, startTransition] = useTransition();
-
-    // Optimistic message rendering
-    const [optimisticMessages, addOptimisticMessage] = useOptimistic(
-        messages,
-        (state: Message[], newMessage: Message) => [...state, newMessage]
-    ) as [Message[], (msg: Message) => void];
-
-    // Persist sessions to localStorage
-    useEffect(() => {
-        try {
-            localStorage.setItem('aussie_chat_sessions', JSON.stringify(sessions));
-        } catch {}
-    }, [sessions]);
 
     // Grouped messages for better visual organization
     const groupedMessages = useMemo(() => {
@@ -46,7 +25,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = memo(({ messages, onQ
         let currentGroup: Message[] = [];
         let currentRole: string | null = null;
 
-        optimisticMessages.forEach(msg => {
+        messages.forEach(msg => {
             if (msg.role !== currentRole) {
                 if (currentGroup.length > 0) {
                     groups.push({
@@ -71,7 +50,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = memo(({ messages, onQ
         }
 
         return groups;
-    }, [optimisticMessages]);
+    }, [messages]);
 
     // Smart Scroll Logic
     const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
@@ -99,23 +78,23 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = memo(({ messages, onQ
     };
 
     const saveSession = () => {
-        startTransition(() => {
-            const newId = Math.random().toString(36).substr(2, 9);
-            const title = `Session ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-            setSessions(prev => [...prev, { id: newId, title, messages: [...messages], lastModified: Date.now() }]);
-            setCurrentSessionId(newId);
-            setShowSessions(false);
-        });
+        const timestamp = new Date().toISOString().replace(/:/g, '-');
+        const filename = `/workspace/system/chat_session_${timestamp}.json`;
+        fs.writeFile(filename, JSON.stringify(messages, null, 2));
+        alert(`Session saved to ${filename}`);
     };
 
-    const deleteSession = (sessionId: string) => {
-        if (sessionId === 'default') return;
-        startTransition(() => {
-            setSessions(prev => prev.filter(s => s.id !== sessionId));
-            if (sessionId === currentSessionId) {
-                setCurrentSessionId('default');
-            }
-        });
+    const loadSession = () => {
+        const filename = prompt("Enter session filename to load:", "/workspace/system/chat_session_...");
+        if (filename && fs.exists(filename)) {
+            const content = fs.readFile(filename);
+            const loadedMessages = JSON.parse(content);
+            julesAgent.clearHistory();
+            loadedMessages.forEach((msg: Message) => julesAgent.getMessages().push(msg));
+            julesAgent.initAI();
+        } else if (filename) {
+            alert("File not found.");
+        }
     };
 
     const copyToClipboard = (text: string, id: string) => {
@@ -124,79 +103,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = memo(({ messages, onQ
         setTimeout(() => setCopiedId(null), 2000);
     };
 
-    const currentSession = sessions.find(s => s.id === currentSessionId);
-
     return (
         <div className="flex-1 flex flex-col min-h-0 px-3 sm:px-4 lg:px-6 w-full">
             <div className="relative flex-1 flex flex-col min-h-0 h-full bg-gradient-to-br from-[#0a0e14] via-[#0d1117] to-[#0a0e14] rounded-2xl overflow-hidden border border-white/5 shadow-2xl max-w-6xl w-full mx-auto">
-                {/* Enhanced Session Header */}
+                {/* Header with Session Management */}
                 <div className="h-14 border-b border-white/10 bg-[#0d1117]/95 backdrop-blur-xl flex items-center justify-between px-4 md:px-5 shrink-0 z-20 select-none shadow-lg">
-                    <div className="relative flex items-center gap-3">
-                        {/* Session Selector */}
-                        <button
-                            onClick={() => setShowSessions(!showSessions)}
-                            className="flex items-center gap-2.5 text-xs font-semibold text-gray-300 hover:text-white transition-all py-2 px-3 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10 group"
-                        >
-                            <History className="w-4 h-4 text-aussie-400 group-hover:text-aussie-300" />
-                            <span className="max-w-[140px] md:max-w-[200px] truncate font-mono">
-                                {currentSession?.title || 'Current Session'}
-                            </span>
-                            <ChevronDown className={`w-3.5 h-3.5 text-gray-500 transition-transform duration-200 ${showSessions ? 'rotate-180' : ''}`} />
-                        </button>
-
-                        {/* Session Dropdown */}
-                        {showSessions && (
-                            <div className="absolute top-full left-0 mt-2 w-72 bg-[#161b22] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                                <div className="p-3 border-b border-white/5 flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <MessageSquare className="w-4 h-4 text-aussie-400" />
-                                        <span className="text-xs font-bold text-white uppercase tracking-wider">Chat History</span>
-                                    </div>
-                                    <span className="text-xs text-gray-500">{sessions.length} sessions</span>
-                                </div>
-                                <div className="max-h-80 overflow-y-auto custom-scrollbar">
-                                    {sessions.map(s => (
-                                        <div
-                                            key={s.id}
-                                            className={`group flex items-center justify-between px-4 py-3 hover:bg-white/5 border-l-2 transition-all ${
-                                                s.id === currentSessionId
-                                                    ? 'text-aussie-300 border-aussie-500 bg-aussie-500/5'
-                                                    : 'text-gray-400 border-transparent'
-                                            }`}
-                                        >
-                                            <button
-                                                onClick={() => { setCurrentSessionId(s.id); setShowSessions(false); }}
-                                                className="flex-1 text-left"
-                                            >
-                                                <div className="text-sm font-semibold truncate">{s.title}</div>
-                                                <div className="text-[10px] text-gray-600 mt-0.5">
-                                                    {new Date(s.lastModified).toLocaleDateString()} • {s.messages.length} messages
-                                                </div>
-                                            </button>
-                                            {s.id !== 'default' && (
-                                                <button
-                                                    onClick={() => deleteSession(s.id)}
-                                                    className="p-1.5 rounded-lg hover:bg-red-500/10 text-gray-600 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
-                                                    title="Delete session"
-                                                >
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="border-t border-white/5 p-2 bg-[#0d1117]">
-                                    <button
-                                        onClick={saveSession}
-                                        disabled={isPending}
-                                        className="w-full flex items-center justify-center gap-2 text-xs text-aussie-400 hover:bg-aussie-500/10 p-2.5 rounded-xl transition-all font-bold border border-aussie-500/20 hover:border-aussie-500/40 disabled:opacity-50"
-                                    >
-                                        <Save className="w-3.5 h-3.5" />
-                                        {isPending ? 'Saving...' : 'Save Current Chat'}
-                                    </button>
-                                </div>
-                            </div>
-                        )}
+                    <div className="flex items-center gap-2">
+                        <button onClick={saveSession} className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors"><Save className="w-4 h-4" /></button>
+                        <button onClick={loadSession} className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors"><History className="w-4 h-4" /></button>
+                        <button onClick={() => julesAgent.clearHistory()} className="p-2 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-400/10 transition-colors"><Trash2 className="w-4 h-4" /></button>
                     </div>
 
                     {/* Model Badge */}

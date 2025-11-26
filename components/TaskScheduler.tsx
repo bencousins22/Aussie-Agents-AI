@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { scheduler } from '../services/scheduler';
 import { ScheduledTask } from '../types';
-import { Plus, Trash2, Clock, Activity, Calendar, RefreshCw, Terminal } from 'lucide-react';
+import { Plus, Trash2, Clock, Activity, Calendar as CalendarIcon, RefreshCw, Terminal } from 'lucide-react';
+import { Calendar } from './Calendar';
 
 export const TaskScheduler: React.FC = () => {
     const [tasks, setTasks] = useState<ScheduledTask[]>([]);
@@ -12,8 +13,7 @@ export const TaskScheduler: React.FC = () => {
     const [newName, setNewName] = useState('');
     const [newType, setNewType] = useState<'command' | 'swarm'>('command');
     const [newAction, setNewAction] = useState('');
-    const [newSchedule, setNewSchedule] = useState<'once' | 'interval'>('once');
-    const [newInterval, setNewInterval] = useState(60);
+    const [newSchedule, setNewSchedule] = useState<'once' | 'hourly' | 'daily' | 'weekly' | 'monthly'>('daily');
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -30,8 +30,7 @@ export const TaskScheduler: React.FC = () => {
             type: newType,
             action: newAction,
             schedule: newSchedule,
-            intervalSeconds: newSchedule === 'interval' ? newInterval : undefined,
-            nextRun: Date.now() // Run immediately/soon
+            nextRun: Date.now()
         });
 
         setShowForm(false);
@@ -49,17 +48,17 @@ export const TaskScheduler: React.FC = () => {
             <div className="p-4 md:p-6 border-b border-gray-800 bg-[#161b22] flex justify-between items-center sticky top-0 z-10">
                 <div>
                     <h2 className="text-lg md:text-xl font-bold text-white flex items-center gap-2">
-                        <Calendar className="w-5 h-5 md:w-6 md:h-6 text-blue-400" />
+                        <CalendarIcon className="w-5 h-5 md:w-6 md:h-6 text-blue-400" />
                         <span className="hidden md:inline">Task Scheduler</span>
                         <span className="md:hidden">Tasks</span>
                     </h2>
-                    <p className="text-xs md:text-sm text-gray-400">Automate system operations</p>
+                    <p className="text-xs md:text-sm text-gray-400">Automate system operations with natural language scheduling</p>
                 </div>
                 <button 
                     onClick={() => setShowForm(true)}
                     className="px-3 md:px-4 py-2 bg-aussie-500 hover:bg-aussie-600 text-[#0f1216] rounded-lg font-bold flex items-center gap-2 transition-colors shadow-lg shadow-aussie-500/20 text-sm"
                 >
-                    <Plus className="w-4 h-4" /> New
+                    <Plus className="w-4 h-4" /> New Task
                 </button>
             </div>
 
@@ -74,27 +73,27 @@ export const TaskScheduler: React.FC = () => {
                                 <input 
                                     value={newName} onChange={e => setNewName(e.target.value)}
                                     className="w-full bg-[#0d1117] border border-gray-700 rounded p-2 text-sm text-white outline-none focus:border-blue-500"
-                                    placeholder="e.g., Hourly System Scan"
+                                    placeholder="e.g., 'Send weekly sales report'"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs text-gray-500 mb-1">Type</label>
+                                <label className="block text-xs text-gray-500 mb-1">Task Type</label>
                                 <select 
                                     value={newType} onChange={e => setNewType(e.target.value as any)}
                                     className="w-full bg-[#0d1117] border border-gray-700 rounded p-2 text-sm text-white outline-none"
                                 >
-                                    <option value="command">Shell Command</option>
-                                    <option value="swarm">Swarm Objective</option>
+                                    <option value="command">Business Task (Natural Language)</option>
+                                    <option value="swarm">Developer Task (Swarm Objective)</option>
                                 </select>
                             </div>
                             <div className="col-span-1 md:col-span-2">
                                 <label className="block text-xs text-gray-500 mb-1">
-                                    {newType === 'command' ? 'Shell Command' : 'Swarm Objective'}
+                                    {newType === 'command' ? 'Describe the task in plain English' : 'Swarm Objective'}
                                 </label>
                                 <input 
                                     value={newAction} onChange={e => setNewAction(e.target.value)}
                                     className="w-full bg-[#0d1117] border border-gray-700 rounded p-2 text-sm text-white font-mono outline-none focus:border-blue-500"
-                                    placeholder={newType === 'command' ? 'echo "Backup started" >> log.txt' : 'Analyze system logs and fix errors'}
+                                    placeholder={newType === 'command' ? 'e.g., "Email a summary of new leads to sales@example.com"' : 'Analyze system logs and fix errors'}
                                 />
                             </div>
                             <div>
@@ -104,19 +103,12 @@ export const TaskScheduler: React.FC = () => {
                                     className="w-full bg-[#0d1117] border border-gray-700 rounded p-2 text-sm text-white outline-none"
                                 >
                                     <option value="once">Run Once</option>
-                                    <option value="interval">Recurring Interval</option>
+                                    <option value="hourly">Hourly</option>
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
                                 </select>
                             </div>
-                            {newSchedule === 'interval' && (
-                                <div>
-                                    <label className="block text-xs text-gray-500 mb-1">Interval (Seconds)</label>
-                                    <input 
-                                        type="number"
-                                        value={newInterval} onChange={e => setNewInterval(parseInt(e.target.value))}
-                                        className="w-full bg-[#0d1117] border border-gray-700 rounded p-2 text-sm text-white outline-none"
-                                    />
-                                </div>
-                            )}
                         </div>
                         <div className="flex gap-2 justify-end">
                             <button onClick={() => setShowForm(false)} className="px-3 py-1.5 text-sm text-gray-400 hover:text-white">Cancel</button>
@@ -124,6 +116,10 @@ export const TaskScheduler: React.FC = () => {
                         </div>
                     </div>
                 )}
+
+                <div className="mb-6">
+                    <Calendar tasks={tasks} />
+                </div>
 
                 <div className="grid grid-cols-1 gap-4">
                     {tasks.map(task => (
@@ -166,11 +162,11 @@ export const TaskScheduler: React.FC = () => {
                                 </div>
                                 <div className="text-xs text-gray-400 font-mono truncate mb-2">
                                     {task.action}
-                                </div>
+                                 </div>
                                 <div className="flex items-center gap-4 text-xs text-gray-500">
                                     <span className="flex items-center gap-1">
                                         <RefreshCw className="w-3 h-3" /> 
-                                        {task.schedule === 'once' ? 'One-time' : `Every ${task.intervalSeconds}s`}
+                                        {task.schedule.charAt(0).toUpperCase() + task.schedule.slice(1)}
                                     </span>
                                     <span className="flex items-center gap-1">
                                         <Clock className="w-3 h-3" /> 
@@ -201,6 +197,9 @@ export const TaskScheduler: React.FC = () => {
                         <div className="text-center py-12 text-gray-500">
                             <Clock className="w-12 h-12 mx-auto mb-3 opacity-20" />
                             <p>No tasks scheduled.</p>
+                            <button onClick={() => setShowForm(true)} className="mt-2 text-sm text-aussie-400 hover:underline">
+                                Schedule your first task
+                            </button>
                         </div>
                     )}
                 </div>
