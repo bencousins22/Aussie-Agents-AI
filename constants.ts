@@ -1,6 +1,6 @@
 
 import { FunctionDeclaration, Type } from "@google/genai";
-import { Home, Code2, Globe, Github, Calendar, Rocket, ShoppingBag, Briefcase, Zap, Server } from 'lucide-react';
+import { Home, Code2, Globe, Github, Calendar, Rocket, ShoppingBag, Briefcase, Zap, Server, DollarSign } from 'lucide-react';
 
 export const AUSSIE_SYSTEM_INSTRUCTION = `
 You are **Jules**, the intelligent autonomous kernel developer of **Aussie OS**.
@@ -191,6 +191,7 @@ export const NAV_ITEMS = [
     { view: 'dashboard', icon: Home, tooltip: 'Command Center', shortcut: true, group: 'Primary' },
     { view: 'agentos', icon: Server, tooltip: 'Agent-OS', shortcut: true, group: 'Primary' },
     { view: 'projects', icon: Briefcase, tooltip: 'Projects', shortcut: true, group: 'Primary' },
+    { view: 'financials', icon: DollarSign, tooltip: 'Financials', shortcut: true, group: 'Primary' },
     { view: 'marketplace', icon: ShoppingBag, tooltip: 'Marketplace', shortcut: true, group: 'Primary' },
     { view: 'code', icon: Code2, tooltip: 'Code', shortcut: true, group: 'Development' },
     { view: 'linux', icon: Server, tooltip: 'WASM Linux', shortcut: false, group: 'Development' },

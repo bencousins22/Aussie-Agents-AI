@@ -145,7 +145,7 @@ export interface DeployState {
     url: string | null;
 }
 
-export type MainView = 'dashboard' | 'agentos' | 'code' | 'flow' | 'browser' | 'scheduler' | 'github' | 'settings' | 'deploy' | 'projects' | 'marketplace' | 'linux';
+export type MainView = 'dashboard' | 'agentos' | 'code' | 'flow' | 'browser' | 'scheduler' | 'github' | 'settings' | 'deploy' | 'projects' | 'marketplace' | 'linux' | 'financials';
 
 export interface ThemeConfig {
     editorFontSize: number;

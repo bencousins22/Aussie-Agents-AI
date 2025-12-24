@@ -22,6 +22,7 @@ import { CollaborationPanel } from './CollaborationPanel';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { SnippetsPanel } from './SnippetsPanel';
 import { ActivityStream } from './ActivityStream';
+import FinancialDashboard from './FinancialDashboard';
 
 interface WorkspaceProps {
     activeView: MainView;
@@ -281,6 +282,7 @@ export const Workspace: React.FC<WorkspaceProps> = ({
             {activeView === 'deploy' && <DeployView />}
             {activeView === 'marketplace' && <Marketplace />}
             {activeView === 'linux' && <WasmLinuxView onRunCommand={onRunCommand} />}
+            {activeView === 'financials' && <FinancialDashboard />}
             {activeView === 'code' && renderCodeView()}
             {!isMobile && <BottomTicker />}
         </div>

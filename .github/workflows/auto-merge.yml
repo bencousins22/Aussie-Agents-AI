@@ -1,0 +1,24 @@
+name: Auto Merge Pull Requests
+
+on:
+  # Trigger the workflow on pull request events
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+jobs:
+  automerge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto-merge
+        uses: "pascalgn/automerge-action@v0.16.2"
+        env:
+          # The GITHUB_TOKEN is a secret automatically provided by GitHub.
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          # We'll use the 'squash' method to keep the main branch history clean.
+          MERGE_METHOD: "squash"
+          # This workflow will merge any pull request that passes its checks.
+          MERGE_AUTHOR: "Jules-the-AI-Agent"

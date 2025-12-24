@@ -43,6 +43,7 @@ export default defineConfig(({ mode }) => {
         extensions: ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.json']
       },
       build: {
+        tsconfig: 'tsconfig.build.json',
         target: 'esnext',
         minify: 'terser',
         terserOptions: {

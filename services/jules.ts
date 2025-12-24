@@ -16,6 +16,7 @@ import { notify } from './notification';
 import { pingJulesApi } from './julesApi';
 
 const uuid = () => Math.random().toString(36).substring(2, 15);
+const HISTORY_FILE = '/workspace/system/chat_history.json';
 
 /**
  * JulesAgent: The Autonomous OS Kernel
@@ -37,6 +38,7 @@ class JulesAgent {
 
     private constructor() {
         this.initAI();
+        this.loadHistory();
     }
 
     public static getInstance(): JulesAgent {
@@ -53,6 +55,26 @@ class JulesAgent {
         }
     }
 
+    private loadHistory() {
+        try {
+            if (fs.exists(HISTORY_FILE)) {
+                const historyJson = fs.readFile(HISTORY_FILE);
+                this.messageHistory = JSON.parse(historyJson);
+                this.notifyUpdate();
+            }
+        } catch (error) {
+            console.error("Failed to load chat history:", error);
+        }
+    }
+
+    private saveHistory() {
+        try {
+            fs.writeFile(HISTORY_FILE, JSON.stringify(this.messageHistory, null, 2));
+        } catch (error) {
+            console.error("Failed to save chat history:", error);
+        }
+    }
+
     public getMessages() {
         return this.messageHistory;
     }
@@ -64,6 +86,7 @@ class JulesAgent {
     public clearHistory() {
         this.messageHistory = [];
         this.chatSession = null;
+        this.saveHistory();
         this.notifyUpdate();
     }
 
@@ -117,17 +140,21 @@ class JulesAgent {
 
         try {
             if (!this.chatSession) {
-                // Only create session once if possible, but ensure AI is ready
                 if (!this.ai) this.initAI();
                 
                 if (this.ai) {
-            const apiKey = getJulesApiKey();
-            this.chatSession = this.ai.chats.create({
+                    const history = this.messageHistory.map(msg => ({
+                        role: msg.role,
+                        parts: [{ text: msg.text }]
+                    }));
+
+                    this.chatSession = this.ai.chats.create({
                         model: 'gemini-2.5-pro',
                         config: { 
                             systemInstruction: AUSSIE_SYSTEM_INSTRUCTION, 
                             tools: [{ functionDeclarations: TOOLS }] 
                         },
+                        history,
                     });
                 } else {
                     throw new Error("Failed to initialize AI client.");
@@ -137,7 +164,6 @@ class JulesAgent {
             let response: GenerateContentResponse = await this.chatSession.sendMessage({ message: text });
             
             // The Execution Loop (Think-Act-Observe)
-            // Loop limit to prevent infinite tool loops
             let loopCount = 0;
             const MAX_LOOPS = 10;
 
@@ -149,14 +175,11 @@ class JulesAgent {
                 const content = candidates[0].content;
                 const parts = content.parts;
                 
-                // 1. Handle Text (Thoughts/Responses)
                 const textParts = parts.filter((p: any) => p.text).map((p: any) => p.text).join('\n');
                 if (textParts) {
                     this.addMessage('model', textParts, 'Jules');
-                    bus.emit('agent-thought', { text: textParts });
                 }
 
-                // 2. Handle Tool Calls
                 const calls = parts.filter((p: any) => p.functionCall);
                 if (calls.length > 0) {
                     this.setPhase('coding');
@@ -166,10 +189,8 @@ class JulesAgent {
                         const call = callPart.functionCall;
                         if (!call) continue;
 
-                        // Execute Tool
                         const result = await this.executeTool(call.name, call.args);
                         
-                        // Check for explicit exit
                         if (call.name === 'idle') {
                             this.isProcessing = false;
                         }
@@ -183,14 +204,12 @@ class JulesAgent {
                         });
                     }
 
-                    // Loop back if still processing and we have tool outputs
                     if (this.isProcessing && responses.length > 0) {
                         response = await this.chatSession.sendMessage({ message: responses });
                     } else {
                         break;
                     }
                 } else {
-                    // No tool calls implies turn completion
                     this.isProcessing = false;
                 }
             }
@@ -329,6 +348,7 @@ class JulesAgent {
             sender
         };
         this.messageHistory = [...this.messageHistory, msg];
+        this.saveHistory();
         this.notifyUpdate();
     }
 }
