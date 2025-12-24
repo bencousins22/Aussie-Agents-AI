@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { financialService, FinancialData, Invoice } from '../services/financials';
+import { financialService, FinancialData, Invoice } from '../../../services/financials';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { TrendingUp, TrendingDown, ChevronUp, ChevronDown, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 
@@ -91,7 +91,7 @@ const InvoiceTable = ({ invoices }: { invoices: Invoice[] }) => {
   )
 };
 
-const FinancialDashboard: React.FC = () => {
+const FinancialsApp: React.FC = () => {
   const [data, setData] = useState<FinancialData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -169,4 +169,4 @@ const FinancialDashboard: React.FC = () => {
   );
 };
 
-export default FinancialDashboard;
+export default FinancialsApp;

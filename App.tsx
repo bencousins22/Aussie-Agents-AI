@@ -19,7 +19,7 @@ const Workspace = lazy(() => import('./components/Workspace').then(m => ({ defau
 const TerminalView = lazy(() => import('./components/TerminalView').then(m => ({ default: m.TerminalView })));
 const AgentOpsPanel = lazy(() => import('./components/AgentOpsPanel').then(m => ({ default: m.AgentOpsPanel })));
 const AgentOS = lazy(() => import('./components/AgentOS').then(m => ({ default: m.AgentOS })));
-const FinancialDashboard = lazy(() => import('./components/FinancialDashboard'));
+const FinancialsApp = lazy(() => import('./components/apps/Financials'));
 
 // Loading fallback component
 const ComponentLoader = () => (
