@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Minus, Square } from 'lucide-react';
+import { X, Minus, Square, Maximize2 } from 'lucide-react';
 import { wm } from '../services/windowManager';
 import { appRegistry } from '../services/appRegistry';
 import { OSWindow } from '../types';
 import { bus } from '../services/eventBus';
+import { LAYOUT } from '../constants/ui';
 
 export const WindowManager: React.FC = () => {
     const [windows, setWindows] = useState<OSWindow[]>([]);
@@ -20,11 +21,10 @@ export const WindowManager: React.FC = () => {
         return wm.subscribe(setWindows);
     }, []);
 
-    // Re-render if registry changes
     useEffect(() => {
         const sub = bus.subscribe(e => {
             if (e.type === 'app-created' || e.type === 'app-installed') {
-                setWindows(prev => [...prev]); // Force re-render to pick up new components
+                setWindows(prev => [...prev]);
             }
         });
         return () => sub();
@@ -36,23 +36,19 @@ export const WindowManager: React.FC = () => {
         <div className="absolute inset-0 pointer-events-none z-30 overflow-hidden">
             {windows.map(win => {
                 if (win.isMinimized) return null;
-                
+
                 const appDef = appRegistry.get(win.appId);
                 const Component = appDef?.component;
-                
-                // On mobile, force maximize logic visually
                 const effectiveMaximized = isMobile ? true : win.isMaximized;
 
                 return (
                     <WindowFrame key={win.id} window={win} isMobile={isMobile} maximizedOverride={effectiveMaximized}>
                         {Component ? (
-                            // Pass botConfig if it exists, or standard props
                             <Component {...win.props} />
                         ) : (
-                            <div className="p-4 text-red-500 bg-[#0f1216] h-full">
-                                <h3 className="font-bold">Application Error</h3>
-                                <p>Could not load application: {win.appId}</p>
-                                <p className="text-xs opacity-50 mt-2">The app definition might be missing from the registry.</p>
+                            <div className="p-4 text-red-400 bg-[#0a0e14] h-full">
+                                <h3 className="font-semibold text-sm">Application Error</h3>
+                                <p className="text-xs text-gray-500 mt-1">Could not load: {win.appId}</p>
                             </div>
                         )}
                     </WindowFrame>
@@ -105,14 +101,14 @@ const WindowFrame: React.FC<{ window: OSWindow, children: React.ReactNode, isMob
             let newX = startPosX;
             let newY = startPosY;
 
-            if (edge.includes('e')) newWidth = Math.max(300, startW + deltaX);
+            if (edge.includes('e')) newWidth = Math.max(LAYOUT.WINDOW_MIN_WIDTH, startW + deltaX);
             if (edge.includes('w')) {
-                newWidth = Math.max(300, startW - deltaX);
+                newWidth = Math.max(LAYOUT.WINDOW_MIN_WIDTH, startW - deltaX);
                 newX = startPosX + (startW - newWidth);
             }
-            if (edge.includes('s')) newHeight = Math.max(200, startH + deltaY);
+            if (edge.includes('s')) newHeight = Math.max(LAYOUT.WINDOW_MIN_HEIGHT, startH + deltaY);
             if (edge.includes('n')) {
-                newHeight = Math.max(200, startH - deltaY);
+                newHeight = Math.max(LAYOUT.WINDOW_MIN_HEIGHT, startH - deltaY);
                 newY = startPosY + (startH - newHeight);
             }
 
@@ -131,59 +127,73 @@ const WindowFrame: React.FC<{ window: OSWindow, children: React.ReactNode, isMob
     };
 
     const style: React.CSSProperties = maximizedOverride ? {
-        top: 0, left: 0, right: 0, bottom: isMobile ? '70px' : 0, width: '100%', height: isMobile ? 'calc(100% - 70px)' : '100%', borderRadius: 0
+        top: 0, left: 0, right: 0, bottom: isMobile ? '64px' : 0, width: '100%', height: isMobile ? 'calc(100% - 64px)' : '100%', borderRadius: 0
     } : {
         top: win.y, left: win.x, width: win.width, height: win.height
     };
 
     return (
         <div
-            className={`absolute bg-[#0f1216] border border-white/10 shadow-2xl flex flex-col pointer-events-auto overflow-hidden ring-1 ring-black/30 ${maximizedOverride ? '' : 'rounded-xl'}`}
+            className={`absolute bg-[#0a0e14] border border-white/10 shadow-2xl flex flex-col pointer-events-auto overflow-hidden ${maximizedOverride ? '' : 'rounded-xl'}`}
             style={{ ...style, zIndex: win.zIndex }}
             onMouseDown={handleMouseDown}
         >
             {/* Title Bar */}
             <div
-                className="h-9 bg-gradient-to-r from-[#161b22] to-[#1a2029] border-b border-white/10 flex items-center justify-between px-3 select-none shrink-0"
+                className="h-9 bg-[#0d1117] border-b border-white/[0.06] flex items-center justify-between px-3 select-none shrink-0"
                 onMouseDown={handleDragStart}
                 onDoubleClick={() => !isMobile && wm.maximizeWindow(win.id)}
             >
-                <span className="text-xs font-bold text-gray-300 flex items-center gap-2 truncate">
+                <span className="text-xs font-medium text-gray-300 truncate">
                     {win.title}
                 </span>
-                <div className="flex items-center gap-1">
-                    <button onClick={(e) => { e.stopPropagation(); wm.minimizeWindow(win.id, true); }} className="w-6 h-6 flex items-center justify-center hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"><Minus className="w-3.5 h-3.5" /></button>
+                <div className="flex items-center gap-0.5">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); wm.minimizeWindow(win.id, true); }}
+                        className="w-6 h-6 flex items-center justify-center hover:bg-white/10 rounded text-gray-500 hover:text-white transition-colors"
+                    >
+                        <Minus className="w-3.5 h-3.5" />
+                    </button>
                     {!isMobile && (
-                        <button onClick={(e) => { e.stopPropagation(); wm.maximizeWindow(win.id); }} className="w-6 h-6 flex items-center justify-center hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"><Square className="w-3 h-3" /></button>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); wm.maximizeWindow(win.id); }}
+                            className="w-6 h-6 flex items-center justify-center hover:bg-white/10 rounded text-gray-500 hover:text-white transition-colors"
+                        >
+                            {win.isMaximized ? <Maximize2 className="w-3 h-3" /> : <Square className="w-3 h-3" />}
+                        </button>
                     )}
-                    <button onClick={(e) => { e.stopPropagation(); wm.closeWindow(win.id); }} className="w-6 h-6 flex items-center justify-center hover:bg-red-500/80 rounded-lg text-gray-400 hover:text-white transition-colors"><X className="w-3.5 h-3.5" /></button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); wm.closeWindow(win.id); }}
+                        className="w-6 h-6 flex items-center justify-center hover:bg-red-500/80 rounded text-gray-500 hover:text-white transition-colors"
+                    >
+                        <X className="w-3.5 h-3.5" />
+                    </button>
                 </div>
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-hidden relative bg-os-bg">
+            <div className="flex-1 overflow-hidden bg-[#0a0e14]">
                 {children}
             </div>
 
-            {/* Resize Handles - All edges and corners */}
+            {/* Resize Handles */}
             {!maximizedOverride && (
                 <>
                     {/* Edge handles */}
-                    <div className="absolute top-0 left-3 right-3 h-1 cursor-n-resize hover:bg-aussie-500/30 transition-colors" onMouseDown={(e) => handleResize(e, 'n')} />
-                    <div className="absolute bottom-0 left-3 right-3 h-1 cursor-s-resize hover:bg-aussie-500/30 transition-colors" onMouseDown={(e) => handleResize(e, 's')} />
-                    <div className="absolute left-0 top-3 bottom-3 w-1 cursor-w-resize hover:bg-aussie-500/30 transition-colors" onMouseDown={(e) => handleResize(e, 'w')} />
-                    <div className="absolute right-0 top-3 bottom-3 w-1 cursor-e-resize hover:bg-aussie-500/30 transition-colors" onMouseDown={(e) => handleResize(e, 'e')} />
+                    <div className="absolute top-0 left-4 right-4 h-1 cursor-n-resize hover:bg-aussie-500/20 transition-colors" onMouseDown={(e) => handleResize(e, 'n')} />
+                    <div className="absolute bottom-0 left-4 right-4 h-1 cursor-s-resize hover:bg-aussie-500/20 transition-colors" onMouseDown={(e) => handleResize(e, 's')} />
+                    <div className="absolute left-0 top-4 bottom-4 w-1 cursor-w-resize hover:bg-aussie-500/20 transition-colors" onMouseDown={(e) => handleResize(e, 'w')} />
+                    <div className="absolute right-0 top-4 bottom-4 w-1 cursor-e-resize hover:bg-aussie-500/20 transition-colors" onMouseDown={(e) => handleResize(e, 'e')} />
 
                     {/* Corner handles */}
-                    <div className="absolute top-0 left-0 w-3 h-3 cursor-nw-resize" onMouseDown={(e) => handleResize(e, 'nw')} />
-                    <div className="absolute top-0 right-0 w-3 h-3 cursor-ne-resize" onMouseDown={(e) => handleResize(e, 'ne')} />
-                    <div className="absolute bottom-0 left-0 w-3 h-3 cursor-sw-resize" onMouseDown={(e) => handleResize(e, 'sw')} />
+                    <div className="absolute top-0 left-0 w-4 h-4 cursor-nw-resize" onMouseDown={(e) => handleResize(e, 'nw')} />
+                    <div className="absolute top-0 right-0 w-4 h-4 cursor-ne-resize" onMouseDown={(e) => handleResize(e, 'ne')} />
+                    <div className="absolute bottom-0 left-0 w-4 h-4 cursor-sw-resize" onMouseDown={(e) => handleResize(e, 'sw')} />
                     <div
-                        className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize group"
+                        className="absolute bottom-0 right-0 w-5 h-5 cursor-se-resize group"
                         onMouseDown={(e) => handleResize(e, 'se')}
                     >
-                        {/* Visual resize grip */}
-                        <div className="absolute bottom-1 right-1 w-2 h-2 opacity-40 group-hover:opacity-80 transition-opacity">
+                        <div className="absolute bottom-1 right-1 w-2.5 h-2.5 opacity-30 group-hover:opacity-60 transition-opacity">
                             <div className="absolute bottom-0 right-0 w-1 h-1 bg-gray-400 rounded-full" />
                             <div className="absolute bottom-0 right-1.5 w-1 h-1 bg-gray-400 rounded-full" />
                             <div className="absolute bottom-1.5 right-0 w-1 h-1 bg-gray-400 rounded-full" />
