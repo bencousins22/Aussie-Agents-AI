@@ -127,21 +127,21 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = memo(({ messages, onQ
     const currentSession = sessions.find(s => s.id === currentSessionId);
 
     return (
-        <div className="flex-1 flex flex-col min-h-0 px-3 sm:px-4 lg:px-6 w-full">
-            <div className="relative flex-1 flex flex-col min-h-0 h-full bg-gradient-to-br from-[#0a0e14] via-[#0d1117] to-[#0a0e14] rounded-2xl overflow-hidden border border-white/5 shadow-2xl max-w-6xl w-full mx-auto">
-                {/* Enhanced Session Header */}
-                <div className="h-14 border-b border-white/10 bg-[#0d1117]/95 backdrop-blur-xl flex items-center justify-between px-4 md:px-5 shrink-0 z-20 select-none shadow-lg">
-                    <div className="relative flex items-center gap-3">
+        <div className="flex-1 flex flex-col min-h-0 px-2 sm:px-3 w-full">
+            <div className="relative flex-1 flex flex-col min-h-0 h-full bg-gradient-to-br from-[#0a0e14] via-[#0d1117] to-[#0a0e14] rounded-xl overflow-hidden border border-white/5 shadow-xl w-full mx-auto">
+                {/* Session Header - Compact */}
+                <div className="h-10 border-b border-white/10 bg-[#0d1117]/95 backdrop-blur-xl flex items-center justify-between px-3 shrink-0 z-20 select-none">
+                    <div className="relative flex items-center gap-2">
                         {/* Session Selector */}
                         <button
                             onClick={() => setShowSessions(!showSessions)}
-                            className="flex items-center gap-2.5 text-xs font-semibold text-gray-300 hover:text-white transition-all py-2 px-3 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10 group"
+                            className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-300 hover:text-white transition-all py-1 px-2 rounded-lg hover:bg-white/5 border border-transparent hover:border-white/10 group"
                         >
-                            <History className="w-4 h-4 text-aussie-400 group-hover:text-aussie-300" />
-                            <span className="max-w-[140px] md:max-w-[200px] truncate font-mono">
-                                {currentSession?.title || 'Current Session'}
+                            <History className="w-3.5 h-3.5 text-aussie-400 group-hover:text-aussie-300" />
+                            <span className="max-w-[120px] truncate">
+                                {currentSession?.title || 'Session'}
                             </span>
-                            <ChevronDown className={`w-3.5 h-3.5 text-gray-500 transition-transform duration-200 ${showSessions ? 'rotate-180' : ''}`} />
+                            <ChevronDown className={`w-3 h-3 text-gray-500 transition-transform duration-150 ${showSessions ? 'rotate-180' : ''}`} />
                         </button>
 
                         {/* Session Dropdown */}
@@ -200,14 +200,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = memo(({ messages, onQ
                     </div>
 
                     {/* Model Badge */}
-                    <div className="flex items-center gap-2 bg-gradient-to-r from-aussie-500/15 to-emerald-500/10 px-3 py-1.5 rounded-xl border border-aussie-500/30 shadow-lg shadow-aussie-500/10">
-                        <Sparkles className="w-3.5 h-3.5 text-aussie-400" />
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-aussie-300">
-                            <span className="hidden sm:inline">Gemini 2.5 Pro</span>
-                            <span className="sm:hidden">Gemini</span>
-                        </span>
+                    <div className="flex items-center gap-1.5 bg-aussie-500/10 px-2 py-1 rounded-lg border border-aussie-500/20">
+                        <Sparkles className="w-3 h-3 text-aussie-400" />
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-aussie-300">Gemini</span>
                         {isProcessing && (
-                            <span className="w-2 h-2 rounded-full bg-aussie-400 animate-pulse shadow-glow" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-aussie-400 animate-pulse shadow-glow" />
                         )}
                     </div>
                 </div>

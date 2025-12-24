@@ -165,39 +165,33 @@ export const TerminalView: React.FC<Props> = ({ blocks, isMobile = false, onExec
     );
 
     return (
-        <div 
-            className="flex flex-col h-full bg-gradient-to-br from-[#0a0e16] via-[#0a101a] to-[#080c13] font-mono text-sm relative overflow-hidden border-t border-white/10 rounded-2xl"
+        <div
+            className="flex flex-col h-full bg-gradient-to-br from-[#0a0e16] via-[#0a101a] to-[#080c13] font-mono text-sm relative overflow-hidden rounded-xl"
             onClick={() => !showPalette && inputRef.current?.focus()}
         >
-            {/* Header - Enhanced */}
-            <div className="h-11 bg-gradient-to-r from-[#0f141c] via-[#0d1118] to-[#0b0f14] border-b border-white/10 flex items-center justify-between px-4 sm:px-5 text-xs text-gray-400 select-none z-10 shrink-0 shadow-[0_6px_30px_rgba(0,0,0,0.35)]">
-                <div className="flex items-center gap-3">
-                    <div className="p-1.5 rounded-lg bg-aussie-500/20 border border-aussie-500/30">
-                        <Terminal className="w-3.5 h-3.5 text-aussie-500" />
+            {/* Header - Compact */}
+            <div className="h-9 bg-gradient-to-r from-[#0f141c] via-[#0d1118] to-[#0b0f14] border-b border-white/10 flex items-center justify-between px-3 text-xs text-gray-400 select-none z-10 shrink-0">
+                <div className="flex items-center gap-2">
+                    <div className="p-1 rounded bg-aussie-500/20 border border-aussie-500/30">
+                        <Terminal className="w-3 h-3 text-aussie-500" />
                     </div>
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs-caps text-gray-500">Terminal</span>
-                        <span className="opacity-30">·</span>
-                        <span className="text-aussie-400/80 font-bold hidden sm:inline text-xs">aussie@local</span>
-                    </div>
+                    <span className="text-[10px] font-bold text-gray-500 uppercase">Terminal</span>
                     {statusLabel && (
-                        <span className="badge badge-primary text-[9px] sm:text-[10px]">
+                        <span className="px-1.5 py-0.5 rounded bg-aussie-500/15 text-aussie-400 border border-aussie-500/20 text-[9px] font-semibold">
                             {statusLabel}
                         </span>
                     )}
                 </div>
-                <div className="flex items-center gap-3">
-                    <div className="flex gap-2 items-center hidden sm:flex bg-white/5 px-3 py-1 rounded-lg border border-white/10">
-                        <span className="text-[10px] font-bold text-gray-600">vsh</span>
-                        <span className="opacity-30">→</span>
-                        <span className="text-aussie-400/80 truncate max-w-[120px] text-[10px] font-mono">{cwd}</span>
+                <div className="flex items-center gap-2">
+                    <div className="hidden sm:flex items-center gap-1.5 bg-white/5 px-2 py-0.5 rounded border border-white/10">
+                        <span className="text-[9px] text-aussie-400/80 truncate max-w-[100px] font-mono">{cwd}</span>
                     </div>
                     <button
                         onClick={(e) => { e.stopPropagation(); setShowPalette(!showPalette); }}
-                        className={`p-2 rounded-lg transition-all ${showPalette ? 'text-aussie-500 bg-aussie-500/20 border border-aussie-500/40' : 'text-gray-400 hover:text-white hover:bg-white/10 border border-transparent'} border`}
+                        className={`p-1.5 rounded transition-all ${showPalette ? 'text-aussie-500 bg-aussie-500/20' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
                         title="Command Palette (Ctrl+Shift+P)"
                     >
-                        <Command className="w-4 h-4" />
+                        <Command className="w-3.5 h-3.5" />
                     </button>
                 </div>
             </div>
@@ -319,11 +313,11 @@ export const TerminalView: React.FC<Props> = ({ blocks, isMobile = false, onExec
                     </div>
                 ))}
 
-                {/* Active Input Line - Enhanced */}
-                <div className="flex items-center gap-3 pt-4 pb-2 px-1 border-t border-white/5 mt-4">
-                    <span className="text-aussie-500 font-bold text-sm shrink-0">➜</span>
-                    <span className="text-aussie-400/70 text-xs opacity-70 hidden sm:inline font-mono bg-white/5 px-2 py-1 rounded border border-white/10 shrink-0">
-                        {cwd}
+                {/* Active Input Line - Compact */}
+                <div className="flex items-center gap-2 pt-3 pb-2 px-1 border-t border-white/5 mt-3">
+                    <span className="text-aussie-500 font-bold text-xs shrink-0">➜</span>
+                    <span className="text-aussie-400/60 text-[10px] hidden sm:inline font-mono bg-white/5 px-1.5 py-0.5 rounded border border-white/10 shrink-0 truncate max-w-[80px]">
+                        {cwd.split('/').pop() || '/'}
                     </span>
                     <input
                         ref={inputRef}
@@ -331,16 +325,16 @@ export const TerminalView: React.FC<Props> = ({ blocks, isMobile = false, onExec
                         value={input}
                         onChange={e => setInput(e.target.value)}
                         onKeyDown={handleInputKeyDown}
-                        className="flex-1 bg-white/5 border border-white/10 rounded-lg outline-none text-gray-100 font-mono text-sm md:text-xs placeholder-gray-700 caret-aussie-500 px-3 py-2 focus:border-aussie-500/40 focus:ring-1 focus:ring-aussie-500/20 transition-all"
+                        className="flex-1 bg-white/5 border border-white/10 rounded-lg outline-none text-gray-100 font-mono text-xs placeholder-gray-600 caret-aussie-500 px-2.5 py-1.5 focus:border-aussie-500/40 focus:ring-1 focus:ring-aussie-500/20 transition-all"
                         autoFocus
                         spellCheck={false}
                         autoComplete="off"
-                        placeholder="Type a command..."
+                        placeholder="Type command..."
                     />
                 </div>
-                
+
                 {/* Spacer for scrolling */}
-                <div className="h-20 md:h-8"></div>
+                <div className="h-12 md:h-4"></div>
             </div>
 
             {/* Mobile Controls */}

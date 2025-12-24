@@ -165,9 +165,9 @@ const [activeView, setActiveView] = useState<MainView>(() => {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
         try {
             const stored = localStorage.getItem(SIDEBAR_KEY);
-            return stored ? stored === 'true' : false; // Default to not collapsed
+            return stored ? stored === 'true' : true; // Default to collapsed for thinner sidebar
         } catch {
-            return false;
+            return true;
         }
     });
     const [mobileChatWidth, setMobileChatWidth] = useState('min(420px,78vw)');
@@ -177,6 +177,9 @@ const [activeView, setActiveView] = useState<MainView>(() => {
         path: null
     });
     const [showAgentOps, setShowAgentOps] = useState(false);
+    const [chatWidth, setChatWidth] = useState(400);
+    const [isResizingChat, setIsResizingChat] = useState(false);
+    const chatResizeRef = useRef<HTMLDivElement>(null);
 
 
     const { messages, isProcessing, workflowPhase, terminalBlocks, editorTabs, activeTabPath, setActiveTabPath, openFile, mediaFile, setMediaFile, processUserMessage, isLive, isTtsEnabled, toggleLive, toggleTts, clearMessages, handleFileUpload, runShellCommand } = useAgent();
@@ -280,21 +283,28 @@ const [activeView, setActiveView] = useState<MainView>(() => {
 
     const ChatPanelContent = (
         <div className="flex-1 min-h-0 flex flex-col">
-            <div className="h-14 sm:h-14 md:h-16 border-b border-white/10 flex items-center justify-between px-3 sm:px-4 md:px-5 lg:px-6 bg-[#161b22]/95 backdrop-blur-md shrink-0 pt-safe shadow-lg">
-                <div className="flex items-center gap-2 sm:gap-2.5 md:gap-3 min-w-0 flex-1">
-                    <div className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0 ${isProcessing || isLive ? 'bg-aussie-500 animate-pulse shadow-glow' : 'bg-aussie-500'}`} />
-                    <span className="font-bold text-sm sm:text-sm md:text-base text-white truncate">Aussie Agent</span>
+            <div className="h-12 border-b border-white/10 flex items-center justify-between px-3 sm:px-4 bg-[#161b22]/95 backdrop-blur-md shrink-0 pt-safe shadow-lg">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <div className={`w-2 h-2 rounded-full shrink-0 ${isProcessing || isLive ? 'bg-aussie-500 animate-pulse shadow-glow' : 'bg-aussie-500'}`} />
+                    <span className="font-bold text-sm text-white truncate">Aussie Agent</span>
                     <Suspense fallback={null}>
                         <AgentStatus state={workflowPhase} />
                     </Suspense>
                 </div>
-                <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 shrink-0">
-                    <button onClick={toggleTts} className={`p-1.5 sm:p-2 md:p-2.5 rounded-lg transition-colors active:scale-95 ${isTtsEnabled ? 'text-aussie-500 bg-aussie-500/10' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}><Headphones className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" /></button>
-                    <button onClick={clearMessages} className="p-1.5 sm:p-2 md:p-2.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-400/10 transition-colors active:scale-95"><Trash2 className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" /></button>
+                <div className="flex items-center gap-1 shrink-0">
+                    <button
+                        onClick={() => setShowAgentOps(v => !v)}
+                        className={`p-1.5 rounded-lg transition-colors active:scale-95 ${showAgentOps ? 'text-aussie-500 bg-aussie-500/10' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                        title="Agent Control Panel"
+                    >
+                        <Sparkles className="w-4 h-4" />
+                    </button>
+                    <button onClick={toggleTts} className={`p-1.5 rounded-lg transition-colors active:scale-95 ${isTtsEnabled ? 'text-aussie-500 bg-aussie-500/10' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}><Headphones className="w-4 h-4" /></button>
+                    <button onClick={clearMessages} className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-400/10 transition-colors active:scale-95"><Trash2 className="w-4 h-4" /></button>
                     {isMobile && (
                         <button
                             onClick={() => setChatOpen(false)}
-                            className="px-2 py-1.5 sm:px-2.5 sm:py-2 flex items-center gap-1 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 active:scale-95 border border-white/5"
+                            className="px-2 py-1.5 flex items-center gap-1 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 active:scale-95 border border-white/5"
                             aria-label="Minimize chat"
                         >
                             <ChevronRight className="w-4 h-4" />
@@ -308,27 +318,40 @@ const [activeView, setActiveView] = useState<MainView>(() => {
                     <ChatInterface messages={messages} onQuickAction={handleSendMessage} isProcessing={isProcessing} />
                 </Suspense>
                 {!isMobile && activeView === 'code' && (
-                    <div className="h-[200px] border-t border-os-border bg-os-bg/80">
-                        <div className="h-9 flex items-center px-3 border-b border-os-border text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                            Quick Terminal
+                    <div className="h-[180px] border-t border-white/10 bg-[#0a0e14]/95">
+                        <div className="h-7 flex items-center justify-between px-3 border-b border-white/10 bg-[#0d1117]/80">
+                            <div className="flex items-center gap-2">
+                                <span className="text-[9px] font-bold uppercase tracking-wider text-gray-500">Quick Terminal</span>
+                                <span className="px-1.5 py-0.5 rounded bg-aussie-500/15 text-aussie-400 border border-aussie-500/20 text-[8px] font-semibold">wasm</span>
+                            </div>
                         </div>
-                        <div className="h-[calc(100%-36px)] overflow-hidden">
+                        <div className="h-[calc(100%-28px)] overflow-hidden">
                             <Suspense fallback={<ComponentLoader />}>
-                                <TerminalView blocks={terminalBlocks} isMobile={false} onExecute={runShellCommand} statusLabel="wasm linux" />
+                                <TerminalView blocks={terminalBlocks} isMobile={false} onExecute={runShellCommand} statusLabel="" />
                             </Suspense>
                         </div>
                     </div>
                 )}
             </div>
-            <div className="border-t border-white/10 bg-[#0d1117]/95 backdrop-blur-sm shrink-0 p-3 sm:p-4 md:p-4 pb-safe space-y-2.5 sm:space-y-3">
-                <div className="flex items-center justify-between text-xs md:text-sm text-gray-500 px-1">
-                    <div className="flex items-center gap-2 md:gap-3">
-                        <span className="px-2.5 py-1.5 rounded-lg bg-aussie-500/10 text-aussie-500 border border-aussie-500/20 font-semibold text-[10px] sm:text-xs">Gemini 2.5 Pro</span>
+            <div className="border-t border-white/10 bg-[#0d1117]/95 backdrop-blur-sm shrink-0 p-3 pb-safe space-y-2">
+                <div className="flex items-center justify-between text-xs text-gray-500 px-1">
+                    <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span className="text-[10px] text-gray-400 font-semibold">Online</span>
+                        </div>
+                        <button
+                            onClick={() => setShowAgentOps(v => !v)}
+                            className={`px-2 py-1 rounded-lg text-[10px] font-semibold border transition-all ${showAgentOps ? 'bg-aussie-500/20 text-aussie-300 border-aussie-500/40' : 'bg-white/5 text-gray-400 border-white/10 hover:text-white hover:border-white/20'}`}
+                        >
+                            Agent OS
+                        </button>
+                        <span className="px-2 py-1 rounded-lg bg-aussie-500/10 text-aussie-500 border border-aussie-500/20 font-semibold text-[10px]">Gemini 2.5 Pro</span>
                         {isProcessing && <span className="w-2 h-2 rounded-full bg-aussie-500 animate-pulse shadow-glow" aria-label="Processing" />}
                     </div>
-                    <div className="hidden md:flex items-center gap-2 text-[10px]">
-                        <button onClick={() => handleSendMessage("/analyze codebase")} className="px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:border-aussie-500/40 text-gray-300 hover:bg-white/10 transition-all">Analyze</button>
-                        <button onClick={() => handleSendMessage("Summarize recent changes")} className="px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:border-aussie-500/40 text-gray-300 hover:bg-white/10 transition-all">Summarize</button>
+                    <div className="hidden md:flex items-center gap-1.5 text-[10px]">
+                        <button onClick={() => handleSendMessage("/analyze codebase")} className="px-2 py-1 rounded-lg bg-white/5 border border-white/10 hover:border-aussie-500/40 text-gray-300 hover:bg-white/10 transition-all">Analyze</button>
+                        <button onClick={() => handleSendMessage("Summarize recent changes")} className="px-2 py-1 rounded-lg bg-white/5 border border-white/10 hover:border-aussie-500/40 text-gray-300 hover:bg-white/10 transition-all">Summarize</button>
                     </div>
                 </div>
                 <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])} />
@@ -372,45 +395,42 @@ const [activeView, setActiveView] = useState<MainView>(() => {
             </Suspense>
 
             {/* Top Command Header */}
-            <div className="fixed top-0 inset-x-0 h-14 z-[80] bg-[#0d1117]/90 border-b border-white/10 backdrop-blur-xl px-3 sm:px-4 flex items-center gap-3">
+            <div className="fixed top-0 inset-x-0 h-12 z-[80] bg-[#0d1117]/95 border-b border-white/10 backdrop-blur-xl px-3 sm:px-4 flex items-center gap-3">
                 <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-xl bg-aussie-500/15 border border-aussie-500/30 flex items-center justify-center text-aussie-300 font-black text-lg">
+                    <div className="w-8 h-8 rounded-lg bg-aussie-500/15 border border-aussie-500/30 flex items-center justify-center text-aussie-300 font-black text-sm">
                         A
                     </div>
                     <div className="leading-tight">
-                        <div className="text-[11px] uppercase tracking-wider text-gray-500 font-bold">Aussie OS</div>
-                        <div className="text-sm font-semibold text-white flex items-center gap-1">
-                            <LayoutDashboard className="w-4 h-4 text-aussie-300" />
+                        <div className="text-sm font-semibold text-white flex items-center gap-1.5">
+                            <LayoutDashboard className="w-3.5 h-3.5 text-aussie-300" />
                             <span>{VIEW_TITLES[activeView] || 'Workspace'}</span>
                         </div>
                     </div>
                 </div>
-                <div className="hidden md:flex items-center gap-2 ml-4">
-                    <button onClick={() => handleNavigate('dashboard')} className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-all ${activeView === 'dashboard' ? 'bg-aussie-500/20 text-aussie-200 border-aussie-500/40' : 'bg-white/5 text-gray-400 border-white/10 hover:text-white'}`}>
+                <div className="hidden md:flex items-center gap-1.5 ml-3">
+                    <button onClick={() => handleNavigate('dashboard')} className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all ${activeView === 'dashboard' ? 'bg-aussie-500/20 text-aussie-200 border-aussie-500/40' : 'bg-white/5 text-gray-400 border-white/10 hover:text-white'}`}>
                         Home
                     </button>
-                    <button onClick={() => handleNavigate('projects')} className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-all ${activeView === 'projects' ? 'bg-aussie-500/20 text-aussie-200 border-aussie-500/40' : 'bg-white/5 text-gray-400 border-white/10 hover:text-white'}`}>
+                    <button onClick={() => handleNavigate('projects')} className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all ${activeView === 'projects' ? 'bg-aussie-500/20 text-aussie-200 border-aussie-500/40' : 'bg-white/5 text-gray-400 border-white/10 hover:text-white'}`}>
                         Projects
                     </button>
-                    <button onClick={() => handleNavigate('code')} className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-all ${activeView === 'code' ? 'bg-aussie-500/20 text-aussie-200 border-aussie-500/40' : 'bg-white/5 text-gray-400 border-white/10 hover:text-white'}`}>
+                    <button onClick={() => handleNavigate('code')} className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all ${activeView === 'code' ? 'bg-aussie-500/20 text-aussie-200 border-aussie-500/40' : 'bg-white/5 text-gray-400 border-white/10 hover:text-white'}`}>
                         Code
                     </button>
                 </div>
                 <div className="flex items-center gap-2 ml-auto">
-                    <button onClick={() => setShowAgentOps(v => !v)} className="px-3 py-2 rounded-lg text-[11px] font-semibold bg-white/5 border border-white/10 hover:border-aussie-500/40 hover:text-white transition-all flex items-center gap-1.5">
-                        Agent OS
-                    </button>
-                    <button onClick={() => setChatOpen(true)} className="px-3 py-2 rounded-lg text-[11px] font-semibold bg-aussie-500 text-black hover:bg-aussie-400 transition-all flex items-center gap-1.5">
+                    <button onClick={() => setChatOpen(true)} className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-aussie-500 text-black hover:bg-aussie-400 transition-all flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5" />
                         Chat
                     </button>
                     <span className={`w-2 h-2 rounded-full ${isProcessing ? 'bg-aussie-500 animate-pulse shadow-glow' : 'bg-gray-500'}`} title={isProcessing ? 'Agent running' : 'Idle'} />
                 </div>
             </div>
 
-            <div className="flex flex-1 w-full pt-14 min-h-0 overflow-hidden">
+            <div className="flex flex-1 w-full pt-12 min-h-0 overflow-hidden">
                 {/* Activity Bar - Persistent Left Sidebar */}
                 {!isMobile && (
-                    <div className={`h-full transition-all duration-300 ${isSidebarCollapsed ? 'w-16' : 'w-56'}`}>
+                    <div className={`h-full transition-all duration-300 ${isSidebarCollapsed ? 'w-14' : 'w-48'}`}>
                         <Suspense fallback={<ComponentLoader />}>
                             <ActivityBar
                                 activeView={activeView}
@@ -471,7 +491,53 @@ const [activeView, setActiveView] = useState<MainView>(() => {
                                 </Suspense>
                             </div>
                         </div>
-                        <div className="w-[400px] h-full border-l border-white/10 bg-[#0d1117] flex flex-col">
+
+                        {/* Agent Ops Panel - Opens next to chat */}
+                        {showAgentOps && (
+                            <div className="h-full border-l border-white/10 bg-[#0b1018] flex flex-col transition-all duration-300" style={{ width: '320px' }}>
+                                <Suspense fallback={<ComponentLoader />}>
+                                    <AgentOpsPanel
+                                        onNavigate={handleNavigate}
+                                        onSendMessage={handleSendMessage}
+                                        onClose={() => setShowAgentOps(false)}
+                                    />
+                                </Suspense>
+                            </div>
+                        )}
+
+                        {/* Resizable Chat Panel */}
+                        <div
+                            className="h-full border-l border-white/10 bg-[#0d1117] flex flex-col relative transition-all duration-150"
+                            style={{ width: `${chatWidth}px`, minWidth: '300px', maxWidth: '600px' }}
+                        >
+                            {/* Resize Handle */}
+                            <div
+                                ref={chatResizeRef}
+                                className="absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-aussie-500/50 transition-colors z-50 group"
+                                onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    setIsResizingChat(true);
+                                    const startX = e.clientX;
+                                    const startWidth = chatWidth;
+
+                                    const onMouseMove = (ev: MouseEvent) => {
+                                        const delta = startX - ev.clientX;
+                                        const newWidth = Math.min(600, Math.max(300, startWidth + delta));
+                                        setChatWidth(newWidth);
+                                    };
+
+                                    const onMouseUp = () => {
+                                        setIsResizingChat(false);
+                                        document.removeEventListener('mousemove', onMouseMove);
+                                        document.removeEventListener('mouseup', onMouseUp);
+                                    };
+
+                                    document.addEventListener('mousemove', onMouseMove);
+                                    document.addEventListener('mouseup', onMouseUp);
+                                }}
+                            >
+                                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-16 bg-white/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
                             {ChatPanelContent}
                         </div>
                     </div>
@@ -575,15 +641,6 @@ const [activeView, setActiveView] = useState<MainView>(() => {
                 </Suspense>
             )}
 
-            {showAgentOps && (
-                <Suspense fallback={<ComponentLoader />}>
-                    <AgentOpsPanel
-                        onNavigate={handleNavigate}
-                        onSendMessage={handleSendMessage}
-                        onClose={() => setShowAgentOps(false)}
-                    />
-                </Suspense>
-            )}
         </div>
     );
 };
