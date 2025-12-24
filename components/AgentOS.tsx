@@ -254,62 +254,67 @@ export const AgentOS: React.FC<Props> = ({ onNavigate }) => {
                 <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
             </div>
 
-            {/* Header */}
-            <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-black/40 to-transparent backdrop-blur-md border-b border-white/10 z-20 flex items-center justify-between px-6">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-aussie-500/20 border border-aussie-500/30 flex items-center justify-center">
-                        <Zap className="w-5 h-5 text-aussie-400" />
+            {/* Header - Compact */}
+            <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-black/50 to-transparent backdrop-blur-md border-b border-white/10 z-20 flex items-center justify-between px-4">
+                <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-aussie-500/20 border border-aussie-500/30 flex items-center justify-center">
+                        <Zap className="w-4 h-4 text-aussie-400" />
                     </div>
                     <div>
-                        <h1 className="text-lg font-bold text-white">Agent-OS</h1>
-                        <p className="text-xs text-gray-400">Desktop Environment</p>
+                        <h1 className="text-sm font-bold text-white">Agent-OS</h1>
+                        <p className="text-[10px] text-gray-500">Desktop</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                     <button
                         onClick={() => onNavigate('dashboard')}
-                        className="px-4 py-2 rounded-lg bg-aussie-500 hover:bg-aussie-600 text-black font-semibold text-sm transition-all"
+                        className="px-3 py-1.5 rounded-lg bg-aussie-500 hover:bg-aussie-600 text-black font-semibold text-xs transition-all"
                     >
-                        Command Center
+                        Dashboard
                     </button>
                     <button
                         onClick={() => onNavigate('settings')}
-                        className="w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-all"
+                        className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-all"
                     >
-                        <Settings className="w-5 h-5" />
+                        <Settings className="w-4 h-4" />
                     </button>
                 </div>
             </div>
 
-            {/* Desktop Icons Grid */}
-            <div className="absolute inset-0 pt-24 pb-28 px-8 grid grid-cols-auto-fill-100 gap-6 content-start pointer-events-none">
-                {icons.map((icon) => {
-                    const IconComp = getIconComponent(icon.name, icon.type);
-                    const isSelected = selectedIcon === icon.name;
+            {/* Desktop Icons Grid - Actual Desktop Style */}
+            <div className="absolute inset-0 pt-20 pb-24 px-6 overflow-hidden pointer-events-none">
+                <div className="grid grid-cols-[repeat(auto-fill,90px)] gap-2 content-start items-start justify-start h-full overflow-y-auto custom-scrollbar pr-2">
+                    {icons.map((icon) => {
+                        const IconComp = getIconComponent(icon.name, icon.type);
+                        const isSelected = selectedIcon === icon.name;
 
-                    return (
-                        <div
-                            key={icon.name}
-                            onClick={(e) => { e.stopPropagation(); setSelectedIcon(icon.name); }}
-                            onDoubleClick={(e) => { e.stopPropagation(); handleDoubleClick(icon); }}
-                            onContextMenu={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setSelectedIcon(icon.name);
-                                setContextMenu({ x: e.clientX, y: e.clientY });
-                            }}
-                            className={`
-                                flex flex-col items-center gap-3 p-3 rounded-xl transition-all duration-200 group select-none cursor-pointer pointer-events-auto
-                                ${isSelected ? 'bg-aussie-500/30 ring-2 ring-aussie-500/50' : 'hover:bg-white/10'}
-                            `}
-                        >
-                            <div className={`w-16 h-16 rounded-xl bg-gradient-to-br from-white/10 to-white/5 border border-white/20 flex items-center justify-center shadow-lg transition-all ${isSelected ? 'scale-110' : 'group-hover:scale-105'}`}>
-                                <IconComp className="w-8 h-8 text-white drop-shadow-lg" />
+                        return (
+                            <div
+                                key={icon.name}
+                                onClick={(e) => { e.stopPropagation(); setSelectedIcon(icon.name); }}
+                                onDoubleClick={(e) => { e.stopPropagation(); handleDoubleClick(icon); }}
+                                onContextMenu={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setSelectedIcon(icon.name);
+                                    setContextMenu({ x: e.clientX, y: e.clientY });
+                                }}
+                                className={`
+                                    flex flex-col items-center gap-1.5 p-2 rounded-lg transition-all duration-150 group select-none cursor-pointer pointer-events-auto w-[84px]
+                                    ${isSelected ? 'bg-aussie-500/25 ring-1 ring-aussie-500/40' : 'hover:bg-white/10'}
+                                `}
+                                style={{ touchAction: 'manipulation' }}
+                            >
+                                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br from-white/15 to-white/5 border border-white/20 flex items-center justify-center shadow-lg transition-all ${isSelected ? 'scale-105 border-aussie-500/40 shadow-aussie-500/20' : 'group-hover:scale-105 group-hover:border-white/30'}`}>
+                                    <IconComp className="w-6 h-6 text-white drop-shadow" />
+                                </div>
+                                <span className={`text-[10px] text-center font-medium line-clamp-2 leading-tight max-w-[76px] drop-shadow-sm px-0.5 ${isSelected ? 'text-aussie-200' : 'text-white/90'}`}>
+                                    {icon.name}
+                                </span>
                             </div>
-                            <span className="text-xs text-white text-center font-semibold line-clamp-2 drop-shadow">{icon.name}</span>
-                        </div>
-                    );
-                })}
+                        );
+                    })}
+                </div>
             </div>
 
             {/* Widgets */}
@@ -326,20 +331,22 @@ export const AgentOS: React.FC<Props> = ({ onNavigate }) => {
             {/* Window Manager */}
             <WindowManager />
 
-            {/* Dock / Taskbar */}
-            <div className="absolute left-0 right-0 bottom-3 flex justify-center z-40 pointer-events-none">
-                <div className="pointer-events-auto flex items-center gap-2 bg-[#0c1017]/95 border border-white/10 rounded-2xl shadow-2xl px-3 py-2 w-[min(92vw,1180px)] backdrop-blur-md">
+            {/* Dock / Taskbar - Compact */}
+            <div className="absolute left-0 right-0 bottom-2 flex justify-center z-40 pointer-events-none">
+                <div className="pointer-events-auto flex items-center gap-1.5 bg-[#0c1017]/95 border border-white/10 rounded-xl shadow-2xl px-2 py-1.5 max-w-[min(94vw,1100px)] backdrop-blur-md">
                     <button
                         onClick={(e) => { e.stopPropagation(); setShowLauncher(v => !v); }}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold border transition-all ${showLauncher ? 'bg-aussie-500 text-black border-aussie-500/60' : 'bg-white/5 text-gray-200 border-white/10 hover:bg-white/10'}`}
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-all ${showLauncher ? 'bg-aussie-500 text-black border-aussie-500/60' : 'bg-white/5 text-gray-200 border-white/10 hover:bg-white/10'}`}
                     >
-                        <LayoutGrid className="w-4 h-4" />
+                        <LayoutGrid className="w-3.5 h-3.5" />
                         Start
                     </button>
 
-                    <div className="flex-1 flex items-center gap-2 overflow-x-auto scrollbar-hide px-1">
+                    <div className="h-5 w-px bg-white/10 mx-1" />
+
+                    <div className="flex-1 flex items-center gap-1 overflow-x-auto scrollbar-hide">
                         {runningWindows.length === 0 ? (
-                            <div className="text-xs text-gray-500">No windows open</div>
+                            <div className="text-[10px] text-gray-500 px-2">No windows</div>
                         ) : (
                             runningWindows.map(win => {
                                 const appDef = appRegistry.get(win.appId);
@@ -350,27 +357,28 @@ export const AgentOS: React.FC<Props> = ({ onNavigate }) => {
                                     <button
                                         key={win.id}
                                         onClick={(e) => { e.stopPropagation(); toggleWindowFromDock(win); }}
-                                        className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all whitespace-nowrap ${isFocused ? 'bg-aussie-500 text-black border-aussie-500/60 shadow-lg shadow-aussie-500/30' : 'bg-white/5 text-gray-200 border-white/10 hover:bg-white/10'}`}
+                                        className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border transition-all whitespace-nowrap ${isFocused ? 'bg-aussie-500 text-black border-aussie-500/60 shadow-md shadow-aussie-500/25' : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'}`}
                                         title={win.title}
                                     >
-                                        <Icon className="w-4 h-4" />
-                                        <span className="text-xs font-semibold max-w-[140px] truncate">{win.title}</span>
-                                        <span className={`w-2 h-2 rounded-full ${isMinimized ? 'bg-gray-500' : 'bg-emerald-400'}`} />
+                                        <Icon className="w-3.5 h-3.5" />
+                                        <span className="text-[10px] font-semibold max-w-[100px] truncate">{win.title}</span>
+                                        <span className={`w-1.5 h-1.5 rounded-full ${isMinimized ? 'bg-gray-500' : 'bg-emerald-400'}`} />
                                     </button>
                                 );
                             })
                         )}
                     </div>
 
+                    <div className="h-5 w-px bg-white/10 mx-1" />
+
                     <button
                         onClick={(e) => { e.stopPropagation(); handleShowDesktop(); }}
-                        className="px-3 py-2 rounded-xl text-xs font-semibold bg-white/5 text-gray-200 border border-white/10 hover:bg-white/10 transition-all flex items-center gap-2"
+                        className="p-1.5 rounded-lg text-gray-300 hover:bg-white/10 transition-all"
                         title="Show desktop"
                     >
-                        <ScreenShare className="w-4 h-4" />
-                        Desktop
+                        <ScreenShare className="w-3.5 h-3.5" />
                     </button>
-                    <div className="text-xs text-gray-400 font-semibold px-2 whitespace-nowrap">
+                    <div className="text-[10px] text-gray-400 font-medium px-1.5 whitespace-nowrap">
                         {clock.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
                 </div>

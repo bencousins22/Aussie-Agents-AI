@@ -86,6 +86,50 @@ const WindowFrame: React.FC<{ window: OSWindow, children: React.ReactNode, isMob
         document.addEventListener('mouseup', onMouseUp);
     };
 
+    const handleResize = (e: React.MouseEvent, edge: 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw') => {
+        if (maximizedOverride) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const startX = e.clientX;
+        const startY = e.clientY;
+        const startW = win.width;
+        const startH = win.height;
+        const startPosX = win.x;
+        const startPosY = win.y;
+
+        const onMove = (mv: MouseEvent) => {
+            const deltaX = mv.clientX - startX;
+            const deltaY = mv.clientY - startY;
+            let newWidth = startW;
+            let newHeight = startH;
+            let newX = startPosX;
+            let newY = startPosY;
+
+            if (edge.includes('e')) newWidth = Math.max(300, startW + deltaX);
+            if (edge.includes('w')) {
+                newWidth = Math.max(300, startW - deltaX);
+                newX = startPosX + (startW - newWidth);
+            }
+            if (edge.includes('s')) newHeight = Math.max(200, startH + deltaY);
+            if (edge.includes('n')) {
+                newHeight = Math.max(200, startH - deltaY);
+                newY = startPosY + (startH - newHeight);
+            }
+
+            if (newX !== startPosX || newY !== startPosY) {
+                wm.moveWindow(win.id, newX, newY);
+            }
+            wm.resizeWindow(win.id, newWidth, newHeight);
+        };
+
+        const onUp = () => {
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+        };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+    };
+
     const style: React.CSSProperties = maximizedOverride ? {
         top: 0, left: 0, right: 0, bottom: isMobile ? '70px' : 0, width: '100%', height: isMobile ? 'calc(100% - 70px)' : '100%', borderRadius: 0
     } : {
@@ -93,26 +137,26 @@ const WindowFrame: React.FC<{ window: OSWindow, children: React.ReactNode, isMob
     };
 
     return (
-        <div 
-            className={`absolute bg-[#0f1216] border border-os-border shadow-2xl flex flex-col pointer-events-auto overflow-hidden ring-1 ring-white/5 ${maximizedOverride ? '' : 'rounded-lg'}`}
+        <div
+            className={`absolute bg-[#0f1216] border border-white/10 shadow-2xl flex flex-col pointer-events-auto overflow-hidden ring-1 ring-black/30 ${maximizedOverride ? '' : 'rounded-xl'}`}
             style={{ ...style, zIndex: win.zIndex }}
             onMouseDown={handleMouseDown}
         >
             {/* Title Bar */}
-            <div 
-                className="h-9 bg-[#161b22] border-b border-os-border flex items-center justify-between px-3 select-none shrink-0"
+            <div
+                className="h-9 bg-gradient-to-r from-[#161b22] to-[#1a2029] border-b border-white/10 flex items-center justify-between px-3 select-none shrink-0"
                 onMouseDown={handleDragStart}
                 onDoubleClick={() => !isMobile && wm.maximizeWindow(win.id)}
             >
-                <span className="text-xs font-bold text-gray-300 flex items-center gap-2">
+                <span className="text-xs font-bold text-gray-300 flex items-center gap-2 truncate">
                     {win.title}
                 </span>
-                <div className="flex items-center gap-2">
-                    <button onClick={(e) => { e.stopPropagation(); wm.minimizeWindow(win.id, true); }} className="p-1 hover:bg-white/10 rounded text-gray-400"><Minus className="w-3 h-3" /></button>
+                <div className="flex items-center gap-1">
+                    <button onClick={(e) => { e.stopPropagation(); wm.minimizeWindow(win.id, true); }} className="w-6 h-6 flex items-center justify-center hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"><Minus className="w-3.5 h-3.5" /></button>
                     {!isMobile && (
-                        <button onClick={(e) => { e.stopPropagation(); wm.maximizeWindow(win.id); }} className="p-1 hover:bg-white/10 rounded text-gray-400"><Square className="w-3 h-3" /></button>
+                        <button onClick={(e) => { e.stopPropagation(); wm.maximizeWindow(win.id); }} className="w-6 h-6 flex items-center justify-center hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"><Square className="w-3 h-3" /></button>
                     )}
-                    <button onClick={(e) => { e.stopPropagation(); wm.closeWindow(win.id); }} className="p-1 hover:bg-red-500 hover:text-white rounded text-gray-400"><X className="w-3 h-3" /></button>
+                    <button onClick={(e) => { e.stopPropagation(); wm.closeWindow(win.id); }} className="w-6 h-6 flex items-center justify-center hover:bg-red-500/80 rounded-lg text-gray-400 hover:text-white transition-colors"><X className="w-3.5 h-3.5" /></button>
                 </div>
             </div>
 
@@ -121,29 +165,31 @@ const WindowFrame: React.FC<{ window: OSWindow, children: React.ReactNode, isMob
                 {children}
             </div>
 
-            {/* Resize Handle */}
+            {/* Resize Handles - All edges and corners */}
             {!maximizedOverride && (
-                <div 
-                    className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-50"
-                    onMouseDown={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const startX = e.clientX;
-                        const startY = e.clientY;
-                        const startW = win.width;
-                        const startH = win.height;
+                <>
+                    {/* Edge handles */}
+                    <div className="absolute top-0 left-3 right-3 h-1 cursor-n-resize hover:bg-aussie-500/30 transition-colors" onMouseDown={(e) => handleResize(e, 'n')} />
+                    <div className="absolute bottom-0 left-3 right-3 h-1 cursor-s-resize hover:bg-aussie-500/30 transition-colors" onMouseDown={(e) => handleResize(e, 's')} />
+                    <div className="absolute left-0 top-3 bottom-3 w-1 cursor-w-resize hover:bg-aussie-500/30 transition-colors" onMouseDown={(e) => handleResize(e, 'w')} />
+                    <div className="absolute right-0 top-3 bottom-3 w-1 cursor-e-resize hover:bg-aussie-500/30 transition-colors" onMouseDown={(e) => handleResize(e, 'e')} />
 
-                        const onMove = (mv: MouseEvent) => {
-                            wm.resizeWindow(win.id, startW + (mv.clientX - startX), startH + (mv.clientY - startY));
-                        };
-                        const onUp = () => {
-                            document.removeEventListener('mousemove', onMove);
-                            document.removeEventListener('mouseup', onUp);
-                        };
-                        document.addEventListener('mousemove', onMove);
-                        document.addEventListener('mouseup', onUp);
-                    }}
-                />
+                    {/* Corner handles */}
+                    <div className="absolute top-0 left-0 w-3 h-3 cursor-nw-resize" onMouseDown={(e) => handleResize(e, 'nw')} />
+                    <div className="absolute top-0 right-0 w-3 h-3 cursor-ne-resize" onMouseDown={(e) => handleResize(e, 'ne')} />
+                    <div className="absolute bottom-0 left-0 w-3 h-3 cursor-sw-resize" onMouseDown={(e) => handleResize(e, 'sw')} />
+                    <div
+                        className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize group"
+                        onMouseDown={(e) => handleResize(e, 'se')}
+                    >
+                        {/* Visual resize grip */}
+                        <div className="absolute bottom-1 right-1 w-2 h-2 opacity-40 group-hover:opacity-80 transition-opacity">
+                            <div className="absolute bottom-0 right-0 w-1 h-1 bg-gray-400 rounded-full" />
+                            <div className="absolute bottom-0 right-1.5 w-1 h-1 bg-gray-400 rounded-full" />
+                            <div className="absolute bottom-1.5 right-0 w-1 h-1 bg-gray-400 rounded-full" />
+                        </div>
+                    </div>
+                </>
             )}
         </div>
     );
