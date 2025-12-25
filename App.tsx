@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef, lazy, Suspense, useTransition } from 'react';
-import { Mic, MicOff, Headphones, Trash2, Plus, ArrowUp, ChevronRight, LayoutDashboard, Sparkles } from 'lucide-react';
+import { Mic, MicOff, Headphones, Trash2, Plus, ArrowUp, ChevronRight, LayoutDashboard, Sparkles, GripVertical } from 'lucide-react';
 import { useAgent } from './services/useAgent';
 import { scheduler } from './services/scheduler';
 import { MainView } from './types';
 import { bus } from './services/eventBus';
 import { KernelShield } from './components/KernelShield';
 import { initWebOsBridge } from './services/webOsBridge';
+import { LAYOUT } from './constants/ui';
 
 // Code splitting: Load components lazily
 const ChatInterface = lazy(() => import('./components/ChatInterface').then(m => ({ default: m.ChatInterface })));
@@ -178,7 +179,7 @@ const [activeView, setActiveView] = useState<MainView>(() => {
         path: null
     });
     const [showAgentOps, setShowAgentOps] = useState(false);
-    const [chatWidth, setChatWidth] = useState(400);
+    const [chatWidth, setChatWidth] = useState(LAYOUT.CHAT_DEFAULT_WIDTH);
     const [isResizingChat, setIsResizingChat] = useState(false);
     const chatResizeRef = useRef<HTMLDivElement>(null);
 
@@ -283,50 +284,55 @@ const [activeView, setActiveView] = useState<MainView>(() => {
     const isMobileBrowserSplit = isMobile && activeView === 'browser' && chatOpen;
 
     const ChatPanelContent = (
-        <div className="flex-1 min-h-0 flex flex-col">
-            <div className="h-12 border-b border-white/10 flex items-center justify-between px-3 sm:px-4 bg-[#161b22]/95 backdrop-blur-md shrink-0 pt-safe shadow-lg">
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <div className={`w-2 h-2 rounded-full shrink-0 ${isProcessing || isLive ? 'bg-aussie-500 animate-pulse shadow-glow' : 'bg-aussie-500'}`} />
-                    <span className="font-bold text-sm text-white truncate">Aussie Agent</span>
+        <div className="flex-1 min-h-0 flex flex-col bg-[#0a0e14]">
+            {/* Chat Header */}
+            <div className="h-11 border-b border-white/10 flex items-center justify-between px-3 bg-[#0d1117] shrink-0">
+                <div className="flex items-center gap-2.5 min-w-0">
+                    <div className={`w-2 h-2 rounded-full shrink-0 ${isProcessing || isLive ? 'bg-aussie-500 animate-pulse shadow-glow-sm' : 'bg-emerald-500'}`} />
+                    <span className="font-semibold text-[13px] text-white">Agent</span>
                     <Suspense fallback={null}>
                         <AgentStatus state={workflowPhase} />
                     </Suspense>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="flex items-center gap-0.5 shrink-0">
                     <button
                         onClick={() => setShowAgentOps(v => !v)}
-                        className={`p-1.5 rounded-lg transition-colors active:scale-95 ${showAgentOps ? 'text-aussie-500 bg-aussie-500/10' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                        className={`w-7 h-7 flex items-center justify-center rounded-lg transition-all active:scale-95 ${showAgentOps ? 'text-aussie-400 bg-aussie-500/15' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}
                         title="Agent Control Panel"
                     >
-                        <Sparkles className="w-4 h-4" />
+                        <Sparkles className="w-3.5 h-3.5" />
                     </button>
-                    <button onClick={toggleTts} className={`p-1.5 rounded-lg transition-colors active:scale-95 ${isTtsEnabled ? 'text-aussie-500 bg-aussie-500/10' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}><Headphones className="w-4 h-4" /></button>
-                    <button onClick={clearMessages} className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-400/10 transition-colors active:scale-95"><Trash2 className="w-4 h-4" /></button>
+                    <button onClick={toggleTts} className={`w-7 h-7 flex items-center justify-center rounded-lg transition-all active:scale-95 ${isTtsEnabled ? 'text-aussie-400 bg-aussie-500/15' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}>
+                        <Headphones className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={clearMessages} className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all active:scale-95">
+                        <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                     {isMobile && (
                         <button
                             onClick={() => setChatOpen(false)}
-                            className="px-2 py-1.5 flex items-center gap-1 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 active:scale-95 border border-white/5"
-                            aria-label="Minimize chat"
+                            className="ml-1 px-2 py-1 flex items-center gap-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 active:scale-95 border border-white/10"
                         >
-                            <ChevronRight className="w-4 h-4" />
-                            <span className="text-[11px] font-semibold">Minimize</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
                         </button>
                     )}
                 </div>
             </div>
+
+            {/* Chat Messages */}
             <div className="flex-1 min-h-0 flex flex-col">
                 <Suspense fallback={<ComponentLoader />}>
                     <ChatInterface messages={messages} onQuickAction={handleSendMessage} isProcessing={isProcessing} />
                 </Suspense>
                 {!isMobile && activeView === 'code' && (
-                    <div className="h-[180px] border-t border-white/10 bg-[#0a0e14]/95">
-                        <div className="h-7 flex items-center justify-between px-3 border-b border-white/10 bg-[#0d1117]/80">
+                    <div className="h-[160px] border-t border-white/10 bg-[#080c12]">
+                        <div className="h-6 flex items-center justify-between px-3 border-b border-white/5 bg-[#0a0e14]">
                             <div className="flex items-center gap-2">
-                                <span className="text-[9px] font-bold uppercase tracking-wider text-gray-500">Quick Terminal</span>
-                                <span className="px-1.5 py-0.5 rounded bg-aussie-500/15 text-aussie-400 border border-aussie-500/20 text-[8px] font-semibold">wasm</span>
+                                <span className="text-[9px] font-bold uppercase tracking-wider text-gray-600">Terminal</span>
+                                <span className="px-1.5 py-0.5 rounded bg-aussie-500/10 text-aussie-500 text-[8px] font-semibold">wasm</span>
                             </div>
                         </div>
-                        <div className="h-[calc(100%-28px)] overflow-hidden">
+                        <div className="h-[calc(100%-24px)] overflow-hidden">
                             <Suspense fallback={<ComponentLoader />}>
                                 <TerminalView blocks={terminalBlocks} isMobile={false} onExecute={runShellCommand} statusLabel="" />
                             </Suspense>
@@ -334,41 +340,49 @@ const [activeView, setActiveView] = useState<MainView>(() => {
                     </div>
                 )}
             </div>
-            <div className="border-t border-white/10 bg-[#0d1117]/95 backdrop-blur-sm shrink-0 p-3 pb-safe space-y-2">
-                <div className="flex items-center justify-between text-xs text-gray-500 px-1">
+
+            {/* Chat Input Footer */}
+            <div className="border-t border-white/10 bg-[#0d1117] shrink-0 p-2.5 pb-safe space-y-2">
+                {/* Status Row */}
+                <div className="flex items-center justify-between px-1">
                     <div className="flex items-center gap-2">
                         <div className="flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span className="text-[10px] text-gray-400 font-semibold">Online</span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            <span className="text-[10px] text-gray-500 font-medium">Online</span>
                         </div>
-                        <button
-                            onClick={() => setShowAgentOps(v => !v)}
-                            className={`px-2 py-1 rounded-lg text-[10px] font-semibold border transition-all ${showAgentOps ? 'bg-aussie-500/20 text-aussie-300 border-aussie-500/40' : 'bg-white/5 text-gray-400 border-white/10 hover:text-white hover:border-white/20'}`}
-                        >
-                            Agent OS
-                        </button>
-                        <span className="px-2 py-1 rounded-lg bg-aussie-500/10 text-aussie-500 border border-aussie-500/20 font-semibold text-[10px]">Gemini 2.5 Pro</span>
-                        {isProcessing && <span className="w-2 h-2 rounded-full bg-aussie-500 animate-pulse shadow-glow" aria-label="Processing" />}
+                        <span className="text-[10px] text-gray-600">•</span>
+                        <span className="text-[10px] text-aussie-500/80 font-medium">Gemini 2.5</span>
+                        {isProcessing && <span className="w-1.5 h-1.5 rounded-full bg-aussie-500 animate-pulse" />}
                     </div>
-                    <div className="hidden md:flex items-center gap-1.5 text-[10px]">
-                        <button onClick={() => handleSendMessage("/analyze codebase")} className="px-2 py-1 rounded-lg bg-white/5 border border-white/10 hover:border-aussie-500/40 text-gray-300 hover:bg-white/10 transition-all">Analyze</button>
-                        <button onClick={() => handleSendMessage("Summarize recent changes")} className="px-2 py-1 rounded-lg bg-white/5 border border-white/10 hover:border-aussie-500/40 text-gray-300 hover:bg-white/10 transition-all">Summarize</button>
+                    <div className="hidden md:flex items-center gap-1">
+                        <button onClick={() => handleSendMessage("/analyze codebase")} className="px-2 py-0.5 rounded text-[9px] text-gray-500 hover:text-white hover:bg-white/5 transition-all">Analyze</button>
+                        <button onClick={() => handleSendMessage("Summarize recent changes")} className="px-2 py-0.5 rounded text-[9px] text-gray-500 hover:text-white hover:bg-white/5 transition-all">Summarize</button>
                     </div>
                 </div>
+
+                {/* Input Area */}
                 <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])} />
-                <div className="flex items-end gap-2 sm:gap-2.5 md:gap-3">
-                    <button onClick={() => fileInputRef.current?.click()} className="p-2.5 sm:p-3 md:p-3.5 rounded-xl bg-white/5 text-gray-400 hover:text-white border border-white/10 hover:border-aussie-500/40 transition-all hover:bg-white/10 active:scale-95"><Plus className="w-5 h-5 sm:w-5 sm:h-5 md:w-6 md:h-6" /></button>
-                    <div className="flex-1 bg-[#0f131a]/80 border border-white/10 rounded-xl sm:rounded-2xl flex items-end relative min-h-[52px] sm:min-h-[56px] md:min-h-[60px] shadow-inner shadow-black/40 hover:border-white/20 transition-colors">
+                <div className="flex items-end gap-2">
+                    <button onClick={() => fileInputRef.current?.click()} className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 text-gray-400 hover:text-white border border-white/10 hover:border-white/20 transition-all hover:bg-white/10 active:scale-95 shrink-0">
+                        <Plus className="w-4 h-4" />
+                    </button>
+                    <div className="flex-1 bg-[#080c12] border border-white/10 rounded-xl flex items-end relative min-h-[44px] hover:border-white/15 transition-colors focus-within:border-aussie-500/30">
                         <textarea
-                            value={input} onChange={(e) => { setInput(e.target.value); e.target.style.height='auto'; e.target.style.height=`${Math.min(e.target.scrollHeight,140)}px`; }}
-                            placeholder={isLive ? "Listening..." : "Message Aussie Agent..."}
-                            className="w-full bg-transparent text-white text-[15px] sm:text-base px-3 sm:px-4 md:px-5 py-3 sm:py-3 md:py-4 max-h-36 outline-none resize-none placeholder:text-gray-600"
-                            rows={1} style={{ height: '52px' }}
+                            value={input}
+                            onChange={(e) => { setInput(e.target.value); e.target.style.height='auto'; e.target.style.height=`${Math.min(e.target.scrollHeight, 120)}px`; }}
+                            placeholder={isLive ? "Listening..." : "Message..."}
+                            className="w-full bg-transparent text-white text-sm px-3 py-2.5 max-h-28 outline-none resize-none placeholder:text-gray-600"
+                            rows={1}
+                            style={{ height: '44px' }}
                             onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
                         />
-                        <button onClick={toggleLive} className={`absolute right-2 bottom-2 p-2 sm:p-2 md:p-2.5 rounded-xl border transition-all active:scale-95 ${isLive ? 'text-red-500 bg-red-500/10 border-red-500/40 animate-pulse' : 'text-gray-400 border-white/10 hover:border-aussie-500/40 hover:bg-white/5'}`}>{isLive ? <Mic className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6"/> : <MicOff className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6"/>}</button>
+                        <button onClick={toggleLive} className={`absolute right-2 bottom-1.5 w-8 h-8 flex items-center justify-center rounded-lg transition-all active:scale-95 ${isLive ? 'text-red-400 bg-red-500/15 animate-pulse' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}>
+                            {isLive ? <Mic className="w-4 h-4"/> : <MicOff className="w-4 h-4"/>}
+                        </button>
                     </div>
-                    <button onClick={() => handleSendMessage()} disabled={!input.trim() && !isLive} className={`p-2.5 sm:p-3 md:p-3.5 rounded-xl shrink-0 border transition-all active:scale-95 ${input.trim() ? 'bg-aussie-500 text-black border-transparent shadow-glow hover:bg-aussie-600' : 'bg-white/5 text-gray-500 border-white/10'}`}><ArrowUp className="w-5 h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 stroke-[3]" /></button>
+                    <button onClick={() => handleSendMessage()} disabled={!input.trim() && !isLive} className={`w-10 h-10 flex items-center justify-center rounded-xl shrink-0 transition-all active:scale-95 ${input.trim() ? 'bg-aussie-500 text-black shadow-glow-sm hover:bg-aussie-400' : 'bg-white/5 text-gray-600 border border-white/10'}`}>
+                        <ArrowUp className="w-4 h-4 stroke-[2.5]" />
+                    </button>
                 </div>
             </div>
         </div>
