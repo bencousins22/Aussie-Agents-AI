@@ -1,6 +1,10 @@
 import * as React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { logger } from './services/logger';
+
+// Initialize logging and error tracking
+logger.init();
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
