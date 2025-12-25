@@ -41,15 +41,20 @@ export const ActivityBar: React.FC<ActivityBarProps> = React.memo(({ activeView,
             flex flex-col py-3 bg-[#0a0d12] border-r border-white/[0.06] h-full transition-all duration-200 relative
             ${isCollapsed ? 'w-14' : 'w-[200px]'}
         `}>
-            {/* Logo */}
-            <div className="flex items-center gap-2.5 px-3 mb-4">
-                <div
-                    className="w-8 h-8 bg-aussie-500 rounded-lg flex items-center justify-center text-black font-bold text-sm cursor-pointer hover:bg-aussie-400 active:scale-95 transition-all shrink-0"
+            {/* Logo with collapse toggle */}
+            <div className="flex items-center gap-2 w-full px-2">
+                <button
+                    className={`
+                        bg-gradient-to-br from-aussie-500 to-aussie-600 rounded-xl flex items-center justify-center text-os-bg font-bold shadow-lg shadow-aussie-500/30 cursor-pointer hover:scale-105 active:scale-95 transition-all shrink-0 relative group appearance-none focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-aussie-500
+                        ${isCollapsed ? 'w-9 h-9 text-lg' : 'w-9 h-9 text-lg'}
+                    `}
                     onClick={() => onNavigate('dashboard')}
                     title="Dashboard"
+                    aria-label="Go to Dashboard"
                 >
                     A
-                </div>
+                    <div className="absolute inset-0 bg-white/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
                 {!isCollapsed && (
                     <span className="text-sm font-semibold text-white truncate">Aussie OS</span>
                 )}
@@ -59,10 +64,11 @@ export const ActivityBar: React.FC<ActivityBarProps> = React.memo(({ activeView,
             <button
                 onClick={onToggleCollapse}
                 className={`
-                    absolute top-1/2 -translate-y-1/2 w-4 h-8 bg-[#0d1117] border border-white/10 rounded-r flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/5 transition-all z-50
-                    ${isCollapsed ? 'left-[54px]' : 'left-[198px]'}
+                    absolute top-1/2 -translate-y-1/2 w-5 h-10 bg-[#161b22] border border-white/10 rounded-r-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-aussie-500/20 hover:border-aussie-500/40 transition-all z-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-aussie-500
+                    ${isCollapsed ? 'left-[52px]' : 'left-[184px]'}
                 `}
-                title={isCollapsed ? 'Expand' : 'Collapse'}
+                title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
                 {isCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
             </button>
@@ -94,6 +100,8 @@ export const ActivityBar: React.FC<ActivityBarProps> = React.memo(({ activeView,
 const MobileTab = ({ icon: Icon, label, active, onClick }: any) => (
     <button
         onClick={onClick}
+        aria-label={label}
+        aria-pressed={active}
         className={`
             flex flex-col items-center justify-center flex-1 py-1.5 transition-all active:scale-90 touch-manipulation
             ${active ? 'text-aussie-400' : 'text-gray-500'}
@@ -115,7 +123,10 @@ const NavButton = ({ icon: Icon, active, onClick, tooltip, isCollapsed, label }:
     <div className="relative group">
         <button
             onClick={onClick}
+            aria-label={label}
+            aria-current={active ? 'page' : undefined}
             className={`
+                flex items-center gap-2.5 w-full rounded-lg transition-all duration-200 py-2 px-2 relative focus:outline-none focus-visible:ring-2 focus-visible:ring-aussie-500 focus-visible:ring-inset
                 flex items-center gap-2.5 w-full py-2 px-2.5 rounded-lg transition-all duration-150
                 ${active
                     ? 'text-aussie-400 bg-aussie-500/10 border border-aussie-500/20'

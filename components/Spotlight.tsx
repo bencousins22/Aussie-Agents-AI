@@ -174,13 +174,19 @@ export const Spotlight: React.FC<Props> = ({ isOpen, onClose, onNavigate }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-start justify-center pt-[10vh] md:pt-[20vh]" onClick={onClose}>
+        <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-start justify-center pt-[10vh] md:pt-[20vh]"
+            onClick={onClose}
+            aria-label="Close spotlight search"
+            role="dialog"
+            aria-modal="true"
+        >
             <div 
                 className="w-[90%] md:w-[600px] bg-[#161b22]/90 backdrop-blur-xl rounded-xl border border-gray-700 shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200 ring-1 ring-white/10"
                 onClick={e => e.stopPropagation()}
             >
                 <div className="flex items-center px-4 py-4 border-b border-gray-700 gap-3">
-                    <Search className="w-5 h-5 text-aussie-500" />
+                    <Search className="w-5 h-5 text-aussie-500" aria-hidden="true" />
                     <input
                         ref={inputRef}
                         value={query}
@@ -189,24 +195,37 @@ export const Spotlight: React.FC<Props> = ({ isOpen, onClose, onNavigate }) => {
                         placeholder="Search apps, files, or calculate..."
                         className="flex-1 bg-transparent outline-none text-lg md:text-xl text-white placeholder-gray-500 font-light"
                         autoFocus
+                        role="combobox"
+                        aria-autocomplete="list"
+                        aria-expanded={results.length > 0}
+                        aria-controls="spotlight-results"
+                        aria-activedescendant={results.length > 0 ? `result-${selectedIndex}` : undefined}
+                        aria-label="Spotlight Search"
                     />
-                    <div className="px-2 py-1 bg-gray-800 rounded text-xs text-gray-400 border border-gray-700 hidden md:block">ESC</div>
+                    <div className="px-2 py-1 bg-gray-800 rounded text-xs text-gray-400 border border-gray-700 hidden md:block" aria-hidden="true">ESC</div>
                 </div>
 
-                <div className="max-h-[400px] overflow-y-auto p-2">
+                <div
+                    id="spotlight-results"
+                    className="max-h-[400px] overflow-y-auto p-2"
+                    role="listbox"
+                >
                     {results.length === 0 && query && (
-                        <div className="p-4 text-center text-gray-500">No results found</div>
+                        <div className="p-4 text-center text-gray-500" role="status">No results found</div>
                     )}
                     {results.map((res, idx) => (
                         <div 
                             key={idx}
+                            id={`result-${idx}`}
                             onClick={() => { res.action(); onClose(); }}
+                            role="option"
+                            aria-selected={idx === selectedIndex}
                             className={`
                                 flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all
                                 ${idx === selectedIndex ? 'bg-aussie-500 text-[#0f1216]' : 'text-gray-300 hover:bg-gray-800'}
                             `}
                         >
-                            <div className={`${idx === selectedIndex ? 'text-[#0f1216]' : 'text-gray-500'}`}>
+                            <div className={`${idx === selectedIndex ? 'text-[#0f1216]' : 'text-gray-500'}`} aria-hidden="true">
                                 {res.type === 'command' && <Terminal className="w-5 h-5" />}
                                 {res.type === 'file' && <File className="w-5 h-5" />}
                                 {res.type === 'nav' && <Command className="w-5 h-5" />}
@@ -217,7 +236,7 @@ export const Spotlight: React.FC<Props> = ({ isOpen, onClose, onNavigate }) => {
                                 <div className="text-sm font-bold">{res.label}</div>
                                 {res.sub && <div className={`text-xs ${idx === selectedIndex ? 'text-black/60' : 'text-gray-500'}`}>{res.sub}</div>}
                             </div>
-                            {idx === selectedIndex && <div className="text-[10px] uppercase font-bold opacity-50 hidden md:block">Enter</div>}
+                            {idx === selectedIndex && <div className="text-[10px] uppercase font-bold opacity-50 hidden md:block" aria-hidden="true">Enter</div>}
                         </div>
                     ))}
                     {!query && (

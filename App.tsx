@@ -20,6 +20,7 @@ const Workspace = lazy(() => import('./components/Workspace').then(m => ({ defau
 const TerminalView = lazy(() => import('./components/TerminalView').then(m => ({ default: m.TerminalView })));
 const AgentOpsPanel = lazy(() => import('./components/AgentOpsPanel').then(m => ({ default: m.AgentOpsPanel })));
 const AgentOS = lazy(() => import('./components/AgentOS').then(m => ({ default: m.AgentOS })));
+const Spotlight = lazy(() => import('./components/Spotlight').then(m => ({ default: m.Spotlight })));
 
 // Loading fallback component
 const ComponentLoader = () => (
@@ -646,6 +647,15 @@ const [activeView, setActiveView] = useState<MainView>(() => {
                     <MediaPlayer file={mediaFile} onClose={() => setMediaFile(null)} />
                 </Suspense>
             )}
+
+            <Suspense fallback={null}>
+                <Spotlight
+                    isOpen={showSpotlight}
+                    onClose={() => setShowSpotlight(false)}
+                    onNavigate={handleNavigate}
+                />
+            </Suspense>
+
             {!isMobile && (
                 <Suspense fallback={null}>
                     <StatusBar 
