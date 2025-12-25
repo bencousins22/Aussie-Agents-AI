@@ -128,8 +128,28 @@ class Logger {
      * Send to error tracking service (Sentry, etc.)
      */
     private sendToErrorTracking(message: string, error?: Error | any, context?: string) {
-        // TODO: Integrate with error tracking service
-        // Example: Sentry.captureException(error, { tags: { context }, extra: { message } });
+        // In a real application, this would be Sentry, LogRocket, etc.
+        // For now, we'll log a structured object that would be sent to the service.
+        // This ensures the integration point is active and ready for the SDK.
+
+        /*
+        // Example Sentry integration:
+        if (window.Sentry) {
+            Sentry.captureException(error, {
+                tags: { context },
+                extra: { message }
+            });
+        }
+        */
+
+        // Fallback for verification/debugging in production-like environments
+        // This log is distinguishable from standard console.error
+        console.error('[Error Tracking]', {
+            timestamp: new Date().toISOString(),
+            context,
+            message,
+            error,
+        });
     }
 }
 
