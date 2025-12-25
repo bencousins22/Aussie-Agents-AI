@@ -127,6 +127,7 @@ const NavButton = ({ icon: Icon, active, onClick, tooltip, isCollapsed, label }:
             aria-current={active ? 'page' : undefined}
             className={`
                 flex items-center gap-2.5 w-full rounded-lg transition-all duration-200 py-2 px-2 relative focus:outline-none focus-visible:ring-2 focus-visible:ring-aussie-500 focus-visible:ring-inset
+                flex items-center gap-2.5 w-full py-2 px-2.5 rounded-lg transition-all duration-150
                 ${active
                     ? 'text-aussie-400 bg-aussie-500/10 border border-aussie-500/20'
                     : 'text-gray-500 hover:text-white hover:bg-white/5 border border-transparent'}
