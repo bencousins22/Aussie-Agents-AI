@@ -3,6 +3,7 @@
  * Replaces console.log/error/warn throughout the app
  */
 
+import * as Sentry from '@sentry/react';
 import { bus } from './eventBus';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -19,6 +20,31 @@ class Logger {
     private logs: LogEntry[] = [];
     private maxLogs = 1000;
     private isDevelopment = typeof process !== 'undefined' ? process.env.NODE_ENV !== 'production' : true;
+
+    /**
+     * Initialize error tracking service
+     */
+    init() {
+        if (!this.isDevelopment && import.meta.env.VITE_SENTRY_DSN) {
+            try {
+                Sentry.init({
+                    dsn: import.meta.env.VITE_SENTRY_DSN,
+                    integrations: [
+                        Sentry.browserTracingIntegration(),
+                        Sentry.replayIntegration(),
+                    ],
+                    // Tracing
+                    tracesSampleRate: 1.0, // Capture 100% of the transactions
+                    // Session Replay
+                    replaysSessionSampleRate: 0.1, // Sample 10% of sessions
+                    replaysOnErrorSampleRate: 1.0, // Sample 100% of sessions with errors
+                });
+                console.log('[Logger] Sentry initialized');
+            } catch (error) {
+                console.error('[Logger] Failed to initialize Sentry:', error);
+            }
+        }
+    }
 
     /**
      * Log debug information (development only)
@@ -128,28 +154,23 @@ class Logger {
      * Send to error tracking service (Sentry, etc.)
      */
     private sendToErrorTracking(message: string, error?: Error | any, context?: string) {
-        // In a real application, this would be Sentry, LogRocket, etc.
-        // For now, we'll log a structured object that would be sent to the service.
-        // This ensures the integration point is active and ready for the SDK.
+        if (this.isDevelopment) return;
 
-        /*
-        // Example Sentry integration:
-        if (window.Sentry) {
-            Sentry.captureException(error, {
-                tags: { context },
-                extra: { message }
-            });
+        try {
+            if (error) {
+                Sentry.captureException(error, {
+                    tags: { context: context || 'unknown' },
+                    extra: { message }
+                });
+            } else {
+                Sentry.captureMessage(message, {
+                    level: 'error',
+                    tags: { context: context || 'unknown' }
+                });
+            }
+        } catch (e) {
+            console.error('[Logger] Failed to send error to Sentry:', e);
         }
-        */
-
-        // Fallback for verification/debugging in production-like environments
-        // This log is distinguishable from standard console.error
-        console.error('[Error Tracking]', {
-            timestamp: new Date().toISOString(),
-            context,
-            message,
-            error,
-        });
     }
 }
 
