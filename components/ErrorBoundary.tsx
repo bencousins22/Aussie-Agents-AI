@@ -39,18 +39,14 @@ export class ErrorBoundary extends Component<Props, State> {
     public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
         const context = this.props.context || 'ErrorBoundary';
 
-        logger.error(`Component error caught in ${context}`, error, context);
+        // Pass both error and errorInfo to logger.
+        // logger.error handles environment checks (dev vs prod) internally.
+        logger.error(`Component error caught in ${context}`, { error, errorInfo }, context);
 
         this.setState({
             error,
             errorInfo,
         });
-
-        // Log to external service in production
-        const isDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-        if (typeof window !== 'undefined' && !isDev) {
-            // TODO: Send to error tracking service (Sentry, etc.)
-        }
     }
 
     private handleReset = () => {
