@@ -113,7 +113,7 @@ export interface ScheduledTask {
     name: string;
     type: 'command' | 'swarm' | 'flow' | 'jules';
     action: string;
-    schedule: 'once' | 'hourly' | 'daily' | 'interval';
+    schedule: 'once' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'interval';
     intervalSeconds?: number;
     lastRun?: number;
     nextRun: number;

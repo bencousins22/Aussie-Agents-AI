@@ -179,6 +179,7 @@ const [activeView, setActiveView] = useState<MainView>(() => {
         path: null
     });
     const [showAgentOps, setShowAgentOps] = useState(false);
+    const [chatWidth, setChatWidth] = useState<number>(LAYOUT.CHAT_DEFAULT_WIDTH);
     const [chatWidth, setChatWidth] = useState(LAYOUT.CHAT_DEFAULT_WIDTH);
     const [isResizingChat, setIsResizingChat] = useState(false);
     const chatResizeRef = useRef<HTMLDivElement>(null);
